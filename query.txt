@@ -1,0 +1,49 @@
+Open LogHub dataset for reproduce (https://zenodo.org/record/1596245#.Yv3zYOxBxqs) our queries can be found as follow:
+
+Android
+ERROR and socket read length failure -104
+
+Apache
+error and Invalid URI in request
+
+Bgl
+ERROR and R00-M1-ND
+
+Hadoop
+ERROR and RECEIVED SIGNAL 15: SIGTERM and 2015-09-23
+
+Hdfs
+error and blk_8846
+
+Healthapp
+Step_ExtSDM and totalAltitude=0
+
+Hpc
+unavailable state and HWID=3378
+
+Linux
+authentication failure and rhost=221.230.128.214
+
+Mac
+failed and Err:-1 Errno:1
+
+Openstack
+ERROR or WARNING and Unexpected error while running command
+
+Proxifier
+HTTPS and play.google.com:443
+
+Spark
+ERROR and Error sending result
+
+Ssh
+Received disconnect from and 202.100.179.208
+
+Thunderbird
+Doorbell ACK timeout
+
+Windows
+Error and Failed to process single phase execution
+
+Zookeeper
+ERROR and CommitProcessor

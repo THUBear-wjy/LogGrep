@@ -1,0 +1,4 @@
+con d
+SELECT * -reg ali.*s
+select * -reg portal.*F
+select * -reg [a-z]\d{9}

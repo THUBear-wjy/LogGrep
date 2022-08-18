@@ -1,0 +1,27 @@
+2022-08-15 21:34:10,736 - thread: LR__0, filename: Apache, fileNo: 0 ERROR!!
+2022-08-15 21:34:10,736 - Apache finished, total time cost: 0.0036656856536865234 , thread accum time: 0.003107309341430664
+2022-08-15 21:34:10,739 - thread: LR__0, filename: Healthapp, fileNo: 0 ERROR!!
+2022-08-15 21:34:10,739 - Healthapp finished, total time cost: 0.0026738643646240234 , thread accum time: 0.002300262451171875
+2022-08-15 21:34:10,742 - thread: LR__0, filename: Hpc, fileNo: 0 ERROR!!
+2022-08-15 21:34:10,742 - Hpc finished, total time cost: 0.002598285675048828 , thread accum time: 0.0022475719451904297
+2022-08-15 21:34:10,744 - thread: LR__0, filename: Linux, fileNo: 0 ERROR!!
+2022-08-15 21:34:10,745 - Linux finished, total time cost: 0.002567291259765625 , thread accum time: 0.0022134780883789062
+2022-08-15 21:34:10,747 - thread: LR__0, filename: Mac, fileNo: 0 ERROR!!
+2022-08-15 21:34:10,747 - Mac finished, total time cost: 0.002547025680541992 , thread accum time: 0.002208232879638672
+2022-08-15 21:34:10,750 - thread: LR__0, filename: Proxifier, fileNo: 0 ERROR!!
+2022-08-15 21:34:10,750 - Proxifier finished, total time cost: 0.002554178237915039 , thread accum time: 0.0022161006927490234
+2022-08-15 21:34:10,753 - thread: LR__1, filename: Ssh, fileNo: 1 ERROR!!
+2022-08-15 21:34:10,753 - thread: LR__0, filename: Ssh, fileNo: 0 ERROR!!
+2022-08-15 21:34:10,754 - Ssh finished, total time cost: 0.003491640090942383 , thread accum time: 0.005512237548828125
+2022-08-15 21:34:10,756 - thread: LR__0, filename: Zookeeper, fileNo: 0 ERROR!!
+2022-08-15 21:34:10,756 - Zookeeper finished, total time cost: 0.0025720596313476562 , thread accum time: 0.0022203922271728516
+2022-08-15 21:34:10,756 - Main finished, total time cost: 0.023824453353881836 , error num: 9
+2022-08-15 21:34:31,658 - Apache finished, total time cost: 0.7648952007293701 , thread accum time: 0.7643356323242188
+2022-08-15 21:34:36,900 - Healthapp finished, total time cost: 5.241892576217651 , thread accum time: 5.241297006607056
+2022-08-15 21:34:43,431 - Hpc finished, total time cost: 6.530285596847534 , thread accum time: 6.5296831130981445
+2022-08-15 21:34:43,978 - Linux finished, total time cost: 0.5474696159362793 , thread accum time: 0.5468871593475342
+2022-08-15 21:34:46,604 - Mac finished, total time cost: 2.625357151031494 , thread accum time: 2.6248128414154053
+2022-08-15 21:34:47,077 - Proxifier finished, total time cost: 0.4724137783050537 , thread accum time: 0.4718167781829834
+2022-08-15 21:34:56,684 - Ssh finished, total time cost: 9.6069974899292 , thread accum time: 10.406309366226196
+2022-08-15 21:34:57,642 - Zookeeper finished, total time cost: 0.957219123840332 , thread accum time: 0.9566605091094971
+2022-08-15 21:34:57,642 - Main finished, total time cost: 26.749698400497437 , error num: 0
