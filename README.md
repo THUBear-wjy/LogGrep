@@ -116,10 +116,10 @@ Linux grep by default settings. gzip of version 1.5.
 
 ## Claims when compared with baseline
 ### Claim 1: 
-The query latency of LogGrep is 2.27x to 51.25x (14.56x on avearge) lower than that of gzip+grep. Overall cost is 34% as much as that of gzip+grep on average.
+The query latency of LogGrep is an order of magnitude lower than that of gzip+grep. And its overall cost is 34% as much as that of gzip+grep on average.
 
 ### Claim 2: 
-The query latency of LogGrep is comparable compared with ES (On Android, Hdfs, Hadoop, Thunderbird, Winodws, LogGrep has a higher latency by up to 12.23x. On other types of logs, LogGrep has a lower latency by up to 12x.) Overall cost is 5% as much as that of ES on average.
+The query latency of LogGrep is comparable compared with ES. And its overall cost is 5% as much as that of ES on average.
 
 ### Claim 3: 
-The query latency of LogGrep is 1.94x to 42.00x (13.74x on average) lower than that of CLP. Overall cost is 41% as much as that of CLP.
+The query latency of LogGrep is an order of magnitude lower than that of CLP. And its overall cost is 41% as much as that of CLP.
