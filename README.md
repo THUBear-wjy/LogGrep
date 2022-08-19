@@ -102,13 +102,6 @@ See Usage instructions and the query commands for each type of logs can be found
 ## Compared system (Baseline)
 ### CLP
 Source code can be found at https://github.com/y-scope/clp-core
-
-Since CLP can not process logic operators like "and" and "not", we use CLP to execute the first part connected by logic operators and use grep to execute the following part.
-
-For example, to execute ``ERROR and socket read length failure -104`` on Apache we run
-
-``./clg archives-dir "ERROR" | grep "socket read length failure -104"``
-
 ### ElasticSearch
 We use Elasticsearch 7.8.0 at https://www.elastic.co/downloads/past-releases/elasticsearch-7-8-0
 ### Linux gzip and Linux grep 
