@@ -230,53 +230,6 @@ LcsMatch GetLCS_DPoptc(const char* str1, int size1, const char* str2, int size2,
     return res;
 }
 
-LcsMatch GetLCS_DPoptc_Backward(const char* str1, int size1, const char* str2, int size2)
-{
-	LcsMatch res;
-    if (size1 == 0 || size2 == 0) return res;
-
-    int indices[] = {0, 0};
-    int sizes[] = {size1, size2};
-    // shift strings to find the longest common substring
-    for (int index = 0; index < 2; ++index)
-    {
-        indices[0] = 0;
-        indices[1] = 0;
-        // i is reference to the value in array
-        int &i = indices[index];
-        int size = sizes[index];
-        // this is tricky to skip comparing strings both start with 0 for second loop
-        i = index;
-        for (; i < size; ++i)
-        {
-            int m = indices[0];
-            int n = indices[1];
-            int length = 0;
-
-            while(m < size1 && n < size2)
-            {
-                if (str1[m] != str2[n])
-                {
-                    length = 0;
-                }
-                else
-                {
-                    ++length;
-                    if (res.Len <= length)
-                    {
-                        res.Len = length;
-						res.Pos1 = m-res.Len+1;
-						res.Pos2 = n-res.Len+1;
-                    }
-                }
-                ++m;
-                ++n;
-            }
-        }
-    }
-    return res;
-}
-
 int RecombineString(char* args[], int argCountS, int argCountE, char* queryStr)
 {
 	int offset=0;
@@ -444,8 +397,7 @@ void BuildGoodS(const char *pattern, int* &goods)
         goods[i] = pLen;
     }  
   
-    goods[pLen - 1] = 1;  
-   
+    goods[pLen - 1] = 1;   
     for(i = pLen -1, c = 0; i != 0; --i)  
     {  
         for(j = 0; j < i; ++j)  
@@ -466,7 +418,7 @@ void BuildGoodS(const char *pattern, int* &goods)
             }  
         }  
     }  
-    
+      
     for(i = 0; i < pLen - 1; ++i)  
     {  
         if(goods[i] != pLen)  
@@ -490,21 +442,14 @@ void BuildGoodS(const char *pattern, int* &goods)
 //flag: align type
 int BM_Fixed_Align(char* text, int sIdx, int tLen, const char* pattern, BitMap* bitmap, int lineLen, int flag)
 {
+	bool en_union_skip = lineLen > MAX_UNION_LINELEN && bitmap->GetSize() > MAX_UNION_BITMAPS;
 	if(flag == QTYPE_ALIGN_FULL || flag == QTYPE_ALIGN_RIGHT)
 	{
-		if(lineLen > MAX_UNION_LINELEN && bitmap->GetSize() > MAX_UNION_BITMAPS)
-		{
-			return BM_Fixed_AlignR_UnionSkip(text, sIdx, tLen, pattern, bitmap, lineLen);
-		}
-		return BM_Fixed_AlignR(text, sIdx, tLen, pattern, bitmap, lineLen);
+		return BM_Fixed_AlignR(text, sIdx, tLen, pattern, bitmap, lineLen, en_union_skip);
 	}
 	else
 	{
-		if(lineLen > MAX_UNION_LINELEN && bitmap->GetSize() > MAX_UNION_BITMAPS)
-		{
-			return BM_Fixed_AlignL_UnionSkip(text, sIdx, tLen, pattern, bitmap, lineLen);
-		}
-		return BM_Fixed_AlignL(text, sIdx, tLen, pattern, bitmap, lineLen);
+		return BM_Fixed_AlignL(text, sIdx, tLen, pattern, bitmap, lineLen, en_union_skip);
 	}
 }
 
@@ -524,11 +469,13 @@ int BM_Fixed_MutiFul(char* text, const char* patterns, int patCnt, BitMap* bitma
     { 
 		for(int patNum =0; patNum < patCnt; patNum++)
 		{
+    		//inverse
     		while((i != 0) && (patterns[patNum * MAX_DICENTY_LEN + i] == text[j]))
     		{  
         		--i;
         		--j;
-    		} 
+    		}
+    		//matched  
     		if(i == 0 && patterns[patNum * MAX_DICENTY_LEN + i] == text[j])
     		{
 				bitmap->Union(k/lineLen);
@@ -544,7 +491,7 @@ int BM_Fixed_MutiFul(char* text, const char* patterns, int patCnt, BitMap* bitma
 	return bitmap->GetSize();  
 }
 
-int BM_Fixed_AlignR(char* text, int sIdx, int tLen, const char* pattern, BitMap* bitmap, int lineLen)
+int BM_Fixed_AlignR(char* text, int sIdx, int tLen, const char* pattern, BitMap* bitmap, int lineLen, bool enableUnionSkip)
 {
 	//if bitmap is already a universal set, return directly
 	if(bitmap->BeSizeFul())
@@ -556,105 +503,35 @@ int BM_Fixed_AlignR(char* text, int sIdx, int tLen, const char* pattern, BitMap*
     int i = pLen_1; 
 	int j = lineLen - 1;
 	int k = lineLen - 1;
+	int lineNo = sIdx;
+	bool enable = true;
     while(j < tLen)
-    {   
-    	while((i != 0) && (pattern[i] == text[j]))
-    	{  
-        	--i;
-        	--j;
-    	} 
-    	if(i == 0 && pattern[i] == text[j])  
-    	{  
-			bitmap->Union(k/lineLen + sIdx);
-    	}
+    {  
+		enable = enableUnionSkip? bitmap->GetValue(lineNo) == 0 : true;
+		if(enable)
+		{ 
+			//inverse 
+			while((i != 0) && (pattern[i] == text[j]))
+			{  
+				--i;
+				--j;
+			}
+			//matched
+			if(i == 0 && pattern[i] == text[j])  
+			{  
+				bitmap->Union(lineNo);
+			}
+		}
 		//directly jump to the next line end
 		k += lineLen;
   		j = k;
     	i = pLen_1;
+		lineNo++;
     }
 	return bitmap->GetSize();  
 }
-int BM_Fixed_AlignL(char* text, int sIdx, int tLen, const char* pattern, BitMap* bitmap, int lineLen)
+int BM_Fixed_AlignL(char* text, int sIdx, int tLen, const char* pattern, BitMap* bitmap, int lineLen, bool enableUnionSkip)
 {
-	//if bitmap is already a universal set, return directly
-	if(bitmap->BeSizeFul())
-	{
-		return DEF_BITMAP_FULL;
-	}
-	int pLen_1 = strlen(pattern)-1;
-	if(pLen_1 + 1 > lineLen) return bitmap->GetSize();
-    int i = pLen_1; 
-	int j = pLen_1;
-	int k = pLen_1;
-	int* badc;
-	int* goods;
-	InitBM(pattern, badc, goods);
-    while(j < tLen)
-    {  
-		while(j <tLen && text[j-pLen_1] == ' ')
-		{
-			j += (goods[i] > badc[text[j]] ? goods[i] : badc[text[j]]);
-		}
-		if((j-pLen_1)%lineLen == 0 || (j <tLen && text[j-pLen_1-1]== ' '))
-		{
-    		while((i != 0) && (pattern[i] == text[j]))
-    		{  
-        		--i;
-        		--j;
-    		}
-       		if(i == 0 && pattern[i] == text[j])
-        	{  
-				int a = bitmap->Index[0];
-				int b = bitmap->Size;
-				bitmap->Union(k/lineLen + sIdx);
-        	}
-		}
-		//directly jump to the next line end
-		k = k + lineLen;
-		j = k;
-		i = pLen_1;
-    }
-	return bitmap->GetSize();  
-}
-
-int BM_Fixed_AlignR_UnionSkip(char* text, int sIdx, int tLen, const char* pattern, BitMap* bitmap, int lineLen)
-{
-	//if bitmap is already a universal set, return directly
-	if(bitmap->BeSizeFul())
-	{
-		return DEF_BITMAP_FULL;
-	}
-	int pLen_1 = strlen(pattern)-1;
-	if(pLen_1 + 1 > lineLen) return bitmap->GetSize();
-    int i = pLen_1; 
-	int j = lineLen - 1;
-	int k = lineLen - 1;
-	int lineNo = sIdx;
-    while(j < tLen)
-    {  
-		if(bitmap->GetValue(lineNo) == 0)
-		{
-    		while((i != 0) && (pattern[i] == text[j]))
-    		{  
-        		--i;
-        		--j;
-    		}
-    		if(i == 0 && pattern[i] == text[j])  
-    		{  
-				bitmap->Union(lineNo);
-    		}
-		}
-		//directly jump to the next line end
-		k += lineLen;
-  		j = k;
-    	i = pLen_1; 
-		lineNo++; 
-    }
-	return bitmap->GetSize();
-}
-int BM_Fixed_AlignL_UnionSkip(char* text, int sIdx, int tLen, const char* pattern, BitMap* bitmap, int lineLen)
-{
-	//if bitmap is already a universal set, return directly
 	if(bitmap->BeSizeFul())
 	{
 		return DEF_BITMAP_FULL;
@@ -665,35 +542,38 @@ int BM_Fixed_AlignL_UnionSkip(char* text, int sIdx, int tLen, const char* patter
 	int j = pLen_1;
 	int k = pLen_1;
 	int lineNo = sIdx;
+	bool enable = true;
 	int* badc;
 	int* goods;
 	InitBM(pattern, badc, goods);
     while(j < tLen)
     {  
-		if(bitmap->GetValue(lineNo) == 0)
-		{
+		enable = enableUnionSkip? bitmap->GetValue(lineNo) == 0 : true;
+		if(enable){
 			while(j <tLen && text[j-pLen_1] == ' ')
 			{
-				j += goods[i] > badc[text[j]] ? goods[i] : badc[text[j]];
+				j += (goods[i] > badc[text[j]] ? goods[i] : badc[text[j]]);
 			}
 			if((j-pLen_1)%lineLen == 0 || (j <tLen && text[j-pLen_1-1]== ' '))
 			{
-    			while((i != 0) && (pattern[i] == text[j]))
-    			{  
-        			--i;
-        			--j;
-    			}
-        		if(i == 0 && pattern[i] == text[j])  
-        		{  
+				//inverse 
+				while((i != 0) && (pattern[i] == text[j]))
+				{  
+					--i;
+					--j;
+				}
+				//matched  
+				if(i == 0 && pattern[i] == text[j])
+				{  
 					bitmap->Union(lineNo);
-        		}
+				}
 			}
 		}
-		//directly jump to the next line
+		//directly jump to the next line end
 		k += lineLen;
-  		j = k;
-        i = pLen_1;
-		lineNo++; 
+		j = k;
+		i = pLen_1;
+		lineNo++;
     }
 	return bitmap->GetSize();  
 }
@@ -705,10 +585,10 @@ int BM_Fixed_Anypos(char* text, int sIdx, int tLen, const char* pattern, BitMap*
 	{
 		return DEF_BITMAP_FULL;
 	}
-
+	bool enableUnionSkip = false;
 	if(lineLen > MAX_UNION_LINELEN && bitmap->GetSize() >= MAX_UNION_BITMAPS)
 	{
-		return BM_Fixed_Anypos_UnionSkip(text, sIdx, tLen, pattern, bitmap, lineLen);
+		enableUnionSkip = true;
 	}
 
 	int pLen_1 = strlen(pattern) - 1; 
@@ -717,89 +597,49 @@ int BM_Fixed_Anypos(char* text, int sIdx, int tLen, const char* pattern, BitMap*
 	int j = i;
 	int k = 0;
 	int tempPos = 0;
-	int* badc;
-	int* goods;
-	InitBM(pattern, badc, goods);
-    while(j < tLen)
-    {  
-        while((i != 0) && (pattern[i] == text[j]))  
-        {  
-            --i;  
-            --j;  
-        }
-        if(i == 0 && pattern[i] == text[j])  
-        {  
-			bitmap->Union(k/lineLen+sIdx);
-			//printf("BM: %d\n", j);
-			k+= lineLen;
-			j = k + pLen_1;
-        }  
-        else  
-        {
-            tempPos = goods[i] > badc[text[j]] ? goods[i] : badc[text[j]];  
-			if(j + tempPos < k + lineLen)
-			{
-				j += tempPos;
-			}
-			else
-			{
-				k+= lineLen;
-				j = k + pLen_1;
-			}
-        }
-        i = pLen_1;
-    }
-
-	return bitmap->GetSize();  
-}
-
-int BM_Fixed_Anypos_UnionSkip(char* text, int sIdx, int tLen, const char* pattern, BitMap* bitmap, int lineLen)
-{
-	int pLen_1 = strlen(pattern) - 1; 
-	if(pLen_1 + 1 > lineLen) return bitmap->GetSize();
-    int i = pLen_1;
-	int j = i;
-	int k = 0;
-	int tempPos = 0;
 	int lineNo =sIdx;
+	bool enable = true;
 	int* badc;
 	int* goods;
 	InitBM(pattern, badc, goods);
     while(j < tLen)
     {  
-		if(bitmap->GetValue(lineNo) == 0)
-		{
+		enable = enableUnionSkip? bitmap->GetValue(lineNo) == 0 : true;
+		if(enable){
 			while(1)
-			{
-        		while((i != 0) && (pattern[i] == text[j]))  
-        		{  
-            		--i;  
-            		--j;  
-        		}
-        		if(i == 0 && pattern[i] == text[j])  
-        		{  
+			{ 
+				while((i != 0) && (pattern[i] == text[j]))  
+				{  
+					--i;  
+					--j;  
+				}
+				//if matched, jump to the next line, no need to do: j += g_goods[0]; 
+				if(i == 0 && pattern[i] == text[j])  
+				{  
 					bitmap->Union(lineNo);
 					break;
-        		}  
-        		else  
-        		{
-            		tempPos = goods[i] > badc[text[j]] ? goods[i] : badc[text[j]];  
+				}  
+				else  
+				{
+					tempPos = goods[i] > badc[text[j]] ? goods[i] : badc[text[j]];  
 					if(j + tempPos < k + lineLen)
 					{
 						j += tempPos;
 					}
-					else
+					else//illegal to cross line for matching, directly jump to the next line
 					{
 						break;
 					}
-        		}
-        		i = pLen_1;
+				}
+				i = pLen_1;
 			}
 		}
 		k+= lineLen;
 		j = k + pLen_1;
+		i = pLen_1;
 		lineNo++;
     }
+
 	return bitmap->GetSize();  
 }
 
@@ -812,7 +652,7 @@ int BM_Diff(char* text, int sIdx, int tLen, const char* pattern, BitMap* bitmap,
 		return DEF_BITMAP_FULL;  
 	}
 	int pLen_1 = strlen(pattern) - 1;  
-	int jumpMinLen = pLen_1 < minLineLen -1 ? pLen_1 : minLineLen -1;
+	int jumpMinLen = pLen_1 < minLineLen -1 ? pLen_1 : minLineLen -1;//Minimize the number of jumps, to prevent from crossing the line
     int i = pLen_1;
 	int j = i;
 	int k = 0;
@@ -833,7 +673,7 @@ int BM_Diff(char* text, int sIdx, int tLen, const char* pattern, BitMap* bitmap,
 			bitmap->Union(lineNo);
 			for(int ii= minLineLen-1; ii< maxLineLen;ii++)
 			{
-				if(text[k+ii]== '\n')
+				if(text[k+ii]== '\n')//found '\n', lineNo++
 				{
 					k+= ii+1;
 					j = k + jumpMinLen;
@@ -845,11 +685,11 @@ int BM_Diff(char* text, int sIdx, int tLen, const char* pattern, BitMap* bitmap,
         else  
         {
             tempPos = goods[i] > badc[text[j]] ? goods[i] : badc[text[j]];  
-			if(j + tempPos < k + minLineLen-1)
+			if(j + tempPos < k + minLineLen-1)//Less than the minimum row length, can be matched normally
 			{
 				j += tempPos;
 			}
-			else if(j + tempPos >= k + maxLineLen)
+			else if(j + tempPos >= k + maxLineLen)//cross lines，illegal!!!
 			{
 				while(text[j] != '\n')
 				{
@@ -859,7 +699,7 @@ int BM_Diff(char* text, int sIdx, int tLen, const char* pattern, BitMap* bitmap,
 				j = k + jumpMinLen;
 				lineNo++;
 			}
-			else
+			else//critical region, be careful! bit-by-bit detect '\n'
 			{
 				j += tempPos;
 				for(int ii=0; ii<=tempPos; ii++)
@@ -886,17 +726,15 @@ int BM_Once(char* text, const char* pattern, int textLen, int* badc, int* goods)
 	int i = pLen_1;
     int j = pLen_1;
     while(j < textLen && j >=0)
-    {
+    {  
         while((i != 0) && (pattern[i] == text[j]))
         {  
             --i;  
             --j;  
-        }
+        } 
         if(i == 0 && pattern[i] == text[j])  
         {  
 			return j;
-			//printf("%d\n", j);
-            //j += g_goods[0];
         }  
         else  
         {
@@ -930,7 +768,6 @@ int BM_Fixed_Pushdown(char* text, const char* pattern, BitMap* bitmap, int lineL
 	}
 	int pLen = strlen(pattern);
 	if(pLen > lineLen) return bitmap->GetSize();// error length
-	
 	int matchResult;
 	int bitmapSize = bitmap->GetSize();
 	bitmap->ResetSize();//only simple set Index[] size
@@ -1409,7 +1246,6 @@ int SeqMatching_MultiFul(const char *S, int sLen, const char *T, int tCnt)
 				break;
 			}
 		}
-    	//找到一个匹配的情况
     	if(i == -1)
     	{  
 			return 1;
@@ -1440,7 +1276,6 @@ int BMwildcard_AxB(char *text, int lineCnt, int lineLen, const char *A, const ch
 			offset = i * lineLen + matchResult + aLen;
 			matchResult = BM_Once(text + offset, B, lineLen, badc_b, goods_b);
 		}
-    	//找到一个匹配的情况  
     	if(matchResult >= 0)
     	{  
 			bitmap->Union(i);
@@ -1813,7 +1648,7 @@ int MatchInSubPatConst_Forward(const char* patConst, int patLen, const char* sou
 		}
 		else
 		{
-			return 0;//失配
+			return 0;
 		}
 	}
 	if(souIndex == souLen)
@@ -1914,10 +1749,12 @@ int MatchInSubpatVvarWithHead(int strTag_mark, int maxlen_mark, const char* patC
 {
 	int patLen = strlen(patConst);
 	LcsMatch lcs= GetLCS_DPoptc(source, souIndex, patConst, patLen, true);
+	//printf("souIndex2: %d %d\n", souIndex, lcs.Pos1);
 	if(lcs.Len != patLen) return -1;
 	int souLen = souIndex + 1;
 	souIndex = lcs.Pos1 + patLen;
 	int count = MatchInSubpatVar_Forward(strTag_mark, maxlen_mark, source, souLen, souIndex);
+	//printf("souIndex3: %d souLen: %d\n", souIndex, souLen);
 	if(count < 0) return -2;
 	souIndex = lcs.Pos1 -1;
 	return count;
@@ -1929,8 +1766,8 @@ int SubPatMatch_0_J(SubPattern* pat, int sPos, int ePos, const char* source, int
 {
 	int souIndex = deftSouIdx;
 	int count=0;
-	int i;
-	int beEnd= true;
+	int i;//Indicates the mismatch location of the variable
+	int beEnd= true;//Only valid for fixed variables
 	for(i=sPos; i<= ePos; i++)
 	{
 		if(souIndex >= souLen) break;
@@ -1955,8 +1792,9 @@ int SubPatMatch_0_J(SubPattern* pat, int sPos, int ePos, const char* source, int
 				}
 				regResult->Addx(i, souIndex - count, count, pat->SubSegAttr[i]);
 			}
-			else
+			else//for variable
 			{
+				//Not the last one and is followed by a static field 
 				if(i < ePos && pat->SubSegAttr[i+1] == SEG_TYPE_CONST)
 				{
 					int tempPos = souIndex;
@@ -2131,6 +1969,16 @@ int SubPatMatch_I_J(SubPattern* pat, const char* source, int souLen, OUT RegMatr
 	regResult->ValidCnt =setNum;
 	if(setNum > 1)
 	{
+		//printf("start union proc, setnum before= %d\n", setNum);
+		// for(int i= 0; i< setNum; i++)
+		// {
+		// 	int y=regResult->Matches[i].Count;
+		// 	for(int j=0; j< y;j++)
+		// 	{
+		// 	printf("---%d %d %d   ", regResult->Matches[i].Match[j].Index, regResult->Matches[i].Match[j].So, regResult->Matches[i].Match[j].Eo);
+		// 	}
+		// 	printf("\n");
+		// }
 
 		for(int i= 1; i< setNum; i++)
 		{
@@ -2147,6 +1995,20 @@ int SubPatMatch_I_J(SubPattern* pat, const char* source, int souLen, OUT RegMatr
 				}
 			}
 		}
+
+		//printf("end union proc, setnum after= %d\n", regResult->ValidCnt);
+		// for(int i= 0; i< setNum; i++)
+		// {
+		// 	if(regResult->Matches[i].BeValid == true)
+		// 	{
+		// 		int y=regResult->Matches[i].Count;
+		// 		for(int j=0; j< y;j++)
+		// 		{
+		// 			printf("---%d %d %d   ", regResult->Matches[i].Match[j].Index, regResult->Matches[i].Match[j].So, regResult->Matches[i].Match[j].Eo);
+		// 		}
+		// 		printf("\n");
+		// 	}
+		// }
 	}
 	
 	if(setNum > 0) return MATCH_PART;
@@ -2178,6 +2040,7 @@ bool UnionMatchResult(RegMatches& obj, RegMatches& refobj)
 ///////////////////////DicPatternMatch//////////////////////
 int MatchInDicPatConst_WithVar(SubPattern::DicVarInfo* pat, int curIndex, const char* source, int souLen)
 {
+	if(pat->segCont[curIndex] == NULL) return 0;
 	int patLen = strlen(pat->segCont[curIndex]);
 	LcsMatch lcs= GetLCS_DPoptc(source, souLen, pat->segCont[curIndex], patLen);
 	if(lcs.Len == 0)// not matched
@@ -2241,6 +2104,7 @@ int DicPatMatch_0_J(SubPattern::DicVarInfo* pat, int sPos, int ePos, const char*
 		}
 		else if(pat->segTag[i] > SEG_TYPE_CONST)
 		{
+			//Not the last one and is followed by a static field 
 			if(i < ePos && pat->segTag[i+1] == SEG_TYPE_CONST)
 			{
 				int tempPos = souIndex;
@@ -2472,6 +2336,14 @@ int DicPatternMatch(SubPattern* pat, const char* source, int matchType, OUT RegM
 
 int Alg_Test()
 {
-
+	
+	// RegMatch regResult[MAX_SUBATTR_CNT];
+	// string str1 = "/tmp/oss_front.soc<S>_<FI,3>_<FS,2>_<S>";
+	// int rst = PatternMatch(str1.c_str(), "front.socAB_12", 1, regResult);
+	// printf("1: %d --- \n", rst);
+	// for(int i=0; i< rst; i++)
+	// {
+	// 	printf("\t %d: %d - %d \n", regResult[i].Index, regResult[i].So, regResult[i].Eo);
+	// }
 	return 0;
 }

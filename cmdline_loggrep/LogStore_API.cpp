@@ -47,7 +47,7 @@ int LogStoreApi::BootLoader(char* path, char* filename)
 	if(ret <= 0) return -1;
 	//load meta data
 	ret = LoadGlbMetadata(cFileTmp, destLen, srcLen, prop);
-	if(ret <= 0) return -2;
+	if(ret <= 0) return -2; //printf("%d\n",m_glbMeta.size());
 	//load templates(pattern)
 	Coffer* coffer = NULL;
 	ret = DeCompressPatterns(MAIN_PAT_NAME, coffer);
@@ -115,8 +115,16 @@ int LogStoreApi::LoadGlbMetadata(char* filename, size_t destLen, size_t srcLen, 
 			m_glbMeta[iname] = newCoffer;
 			if(newCoffer->eleLen == -3 && newCoffer ->lines > 0)//var outliers
 			{
-				LoadVarOutliers(iname, newCoffer ->lines);
+				LoadVarOutliers(iname, newCoffer ->lines, newCoffer ->srcLen);
 			}
+			
+			//for stat
+			if(newCoffer ->lines > 0)
+			{
+				Statistic.total_capsule_cnt ++;
+			}
+			
+
 			offset=0;
 			index++;
 
@@ -134,7 +142,8 @@ int LogStoreApi::LoadGlbMetadata(char* filename, size_t destLen, size_t srcLen, 
 	return index;
 }
 
-int LogStoreApi::LoadVarOutliers(int filename, int lines)
+//E18_V2.outlier: srcLen:87573 lines: 5253 eleLen:-1
+int LogStoreApi::LoadVarOutliers(int filename, int lines, int srcLen)
 {
 	if(lines == 0)
 	{
@@ -150,9 +159,8 @@ int LogStoreApi::LoadVarOutliers(int filename, int lines)
 		int slim =0;
 		int patStartPos = 0;
 		int patEndPos = 0;
-		int len = strlen(buf);
 		int index=0;
-		for (int i=0; i< len; i++)
+		for (int i=0; i< srcLen; i++)
 		{
 			if (buf[i] == '\n')//a new line
 			{
@@ -201,6 +209,8 @@ int LogStoreApi::LoadOutliers(IN char *buf, int lineCount)
 		{
 			m_outliers[index]= new char[offset];
 			memcpy(m_outliers[index], p-offset, offset);
+			//offset can reach to 18960, can you believe it!
+			//SyslogDebug("offset:%d\n", offset);
 			index ++;
 			offset =0;
 		}
@@ -212,6 +222,10 @@ int LogStoreApi::LoadOutliers(IN char *buf, int lineCount)
 	//get the max count
 	if(m_maxBitmapSize < lineCount)
 		m_maxBitmapSize = lineCount;
+	// for(int i=0;i<lineCount;i++)
+	// {
+	// 	SyslogDebug("%s\n",m_outliers[i]);
+	// }
 	return index;
 }
 
@@ -365,6 +379,15 @@ int LogStoreApi::AddSubPatternToMap(int vid, char type, char* content)
 		logP->SetContent(content);
 		logP->SetSegments(vid, content);
 		SyslogDebug("%d (%s) %c %s \n", vid, FormatVarName(vid), type, content);
+		// for(int i=0;i< logP->SegSize; i++)
+		// {
+		// 	if(logP->SegAttr[i] == SEG_TYPE_CONST)
+		// 		printf("--const--%s\n", logP->Segment[i]);
+		// 	else
+		// 	{
+		// 		printf("--%s--%c %d %d\n", logP->Segment[i], logP->SubVars[i]->mark, logP->SubVars[i]->tag, logP->SubVars[i]->len);
+		// 	}
+		// }
 	}
 	else if(type =='D')
 	{
@@ -432,6 +455,17 @@ int LogStoreApi::AddSubPatternToMap(int vid, char type, char* content)
 			}
 		}
 		SyslogDebug("%d (%s) %c %s\n", vid, FormatVarName(vid), type, content);
+		// for(int i=0; i<index; i++)
+		// {
+		// 	printf("---%d--- lineLen:%d lineSno:%d lineCnt:%d %s \n", index, logP->DicVars[i] ->len, logP->DicVars[i] ->lineSno, logP->DicVars[i] ->lineCnt, logP->DicVars[i] ->pat);
+		// 	for(int j=0;j< logP->DicVars[i] ->segSize;j++)
+		// 	{
+		// 		if(logP->DicVars[i] ->segTag[j] == SEG_TYPE_CONST)
+		// 			printf("------------- %s \n", logP->DicVars[i] ->segCont[j]);
+		// 		else
+		// 			printf("------------- %d \n", logP->DicVars[i] ->segTag[j]);
+		// 	}
+		// }
 	}
 	else if(type =='V')
 	{
@@ -482,6 +516,9 @@ int LogStoreApi::DeCompressPatterns(int patName, OUT Coffer* &coffer)
 		res = coffer -> decompress(m_lzmaMethod);
 		if(res < 0) return -3;
 	}
+
+	//for stat
+	Statistic.total_decom_capsule_cnt++;
 	return 1;
 }
 
@@ -582,7 +619,9 @@ int LogStoreApi::QueryByBM_Union(int varname, const char* queryStr, int queryTyp
 	}
 	else
 	{
-		return 0;
+		SyslogDebug("-----------------using kmp\n");
+		int ret = KMP(meta ->data, queryStr, bitmap, queryType);
+		return ret;
 	}
 }
 
@@ -662,7 +701,18 @@ int LogStoreApi::QueryByBM_Union_ForDic(int varname, const char* querySegs, int 
 	}
 	else
 	{
-		;
+		SyslogDebug("-----------------using kmp3 %d\n", querySegCnt);
+		if(querySegCnt == 1)
+		{
+			ret = KMP(meta ->data, querySegs, bitmap, QTYPE_ALIGN_FULL);
+		}
+		else
+		{
+			for(int i=0;i<querySegCnt;i++)
+			{
+				ret = KMP(meta ->data, querySegs + i*MAX_DICENTY_LEN, bitmap, QTYPE_ALIGN_FULL);
+			}
+		}
 	}
 	return ret;
 }
@@ -686,10 +736,6 @@ int LogStoreApi::QueryByBM_Pushdown(int varname, const char* queryStr, BitMap* b
 		{
 			return BM_Fixed_Pushdown(meta->data, queryStr, bitmap, meta->eleLen, type);
 		}
-		else
-		{
-			;
-		}
 	}
 	else
 	{
@@ -697,10 +743,6 @@ int LogStoreApi::QueryByBM_Pushdown(int varname, const char* queryStr, BitMap* b
 		if(INC_TEST_PUSHDOWN)
 		{
 			return BM_Diff_Pushdown(meta ->data, queryStr, bitmap, type);
-		}
-		else
-		{
-			;
 		}
 	}
 	return bitmap->GetSize();
@@ -724,10 +766,6 @@ int LogStoreApi::QueryByBM_Pushdown_RefMap(int varname, const char* queryStr, Bi
 			SyslogDebug("QueryByBM_Pushdown_RefMap %d\n", rst);
 			return rst;
 		}
-		else
-		{
-			;
-		}
 	}
 	else
 	{
@@ -736,10 +774,6 @@ int LogStoreApi::QueryByBM_Pushdown_RefMap(int varname, const char* queryStr, Bi
 		{
 			int rst = BM_Diff_Pushdown_RefMap(meta ->data, queryStr, bitmap, refBitmap, type);
 			return rst;
-		}
-		else
-		{
-			;
 		}
 	}
 	return bitmap->GetSize();
@@ -764,20 +798,12 @@ int LogStoreApi::QueryByBM_Pushdown_ForDic(int varname, const char* querySegs, i
 			{
 				ret = BM_Fixed_Pushdown(meta->data, querySegs, bitmap, meta->eleLen, 0);
 			}
-			else
-			{
-				;
-			}
 		}
 		else
 		{
 			if(INC_TEST_PUSHDOWN)
 			{
 				ret = BM_Fixed_Pushdown_MutiFul(meta->data, querySegs, querySegCnt, bitmap, meta->eleLen);
-			}
-			else
-			{
-				;
 			}
 		}
 	}
@@ -789,10 +815,6 @@ int LogStoreApi::QueryByBM_Pushdown_ForDic(int varname, const char* querySegs, i
 			if(INC_TEST_PUSHDOWN)
 			{
 				ret = BM_Diff_Pushdown(meta->data, querySegs, bitmap, -1);
-			}
-			else
-			{
-				;
 			}
 		}
 		else
@@ -806,10 +828,6 @@ int LogStoreApi::QueryByBM_Pushdown_ForDic(int varname, const char* querySegs, i
 				}
 				BM_Diff_Pushdown(meta->data, querySegs + (querySegCnt-1) *MAX_DICENTY_LEN, bitmap, QTYPE_ALIGN_ANY);
 				bitmap->Union(m_glbExchgSubTempBitmap);
-			}
-			else
-			{
-				;
 			}
 		}
 	}
@@ -835,10 +853,6 @@ int LogStoreApi::QueryByBM_Pushdown_ForDic_RefMap(int varname, const char* query
 			{
 				ret = BM_Fixed_Pushdown_RefMap(meta->data, querySegs, bitmap, refBitmap, meta->eleLen, 0);
 			}
-			else
-			{
-				;
-			}
 		}
 		else
 		{
@@ -846,10 +860,6 @@ int LogStoreApi::QueryByBM_Pushdown_ForDic_RefMap(int varname, const char* query
 			{
 
 				ret = BM_Fixed_Pushdown_MutiFul_RefMap(meta->data, querySegs, querySegCnt, bitmap, refBitmap, meta->eleLen);
-			}
-			else
-			{
-				;
 			}
 		}
 	}
@@ -861,10 +871,6 @@ int LogStoreApi::QueryByBM_Pushdown_ForDic_RefMap(int varname, const char* query
 			if(INC_TEST_PUSHDOWN)
 			{
 				ret = BM_Diff_Pushdown_RefMap(meta->data, querySegs, bitmap, refBitmap, -1);
-			}
-			else
-			{
-				;
 			}
 		}
 		else
@@ -878,10 +884,6 @@ int LogStoreApi::QueryByBM_Pushdown_ForDic_RefMap(int varname, const char* query
 				}
 				BM_Diff_Pushdown_RefMap(meta->data, querySegs + (querySegCnt-1) *MAX_DICENTY_LEN, bitmap, refBitmap, QTYPE_ALIGN_ANY);
 				bitmap->Union(m_glbExchgSubTempBitmap);
-			}
-			else
-			{
-				;
 			}
 		}
 	}
@@ -901,7 +903,7 @@ int LogStoreApi::LoadcVarsByBitmap(int varname, BitMap* bitmap, OUT char *vars, 
 	}
 	else
 	{
-		;
+		ret = GetCvarsByBitmap_Diff(meta->data, 0, bitmap, vars, entryCnt, varsLineLen, flag);
 	}
 	return ret;
 }
@@ -918,7 +920,7 @@ int LogStoreApi::LoadcVars(int varname, int entryCnt, OUT char *vars, int varsLi
 	}
 	else
 	{
-		;
+		ret = GetCvars_Diff(meta->data, vars, entryCnt, varsLineLen, flag);
 	}
 	return ret;
 }
@@ -1000,10 +1002,7 @@ int LogStoreApi::GetVals_AxB_Subpat(int varName, const char* queryA, const char*
 	return bitmap->GetSize();
 }
 
-//select * -m 5E1ABCDF5E47391ACD         5E<F,3,6>5E4739<F,3,10>
-//select * -m 12.345
-//select * -m 1212121212121212121221211221AAAA/ASD_ERTY   <F,3,32>/<V,63,104>_<V,63,149>
-//select * -m /tmp/oss_front.sock4                  /tmp/oss_front.soc<F,17,2>_<V,1,4>_0<F,21,9>
+
 int LogStoreApi::GetVals_Subpat_Pushdown(int varName, const char* regPattern, int queryType, BitMap* bitmap)
 {
 	//first check outliers
@@ -1043,18 +1042,18 @@ int LogStoreApi::GetVals_Subpat_Pushdown(int varName, const char* regPattern, in
 		{
 			if(regResult->Matches[i].BeValid == false) continue;
 			validCnt++;
-			if(validCnt == 1)//第一个下推合并到m_glbExchgSubBitmap中
+			if(validCnt == 1)//the first pushdown merges into m_glbExchgSubBitmap
 			{
 				m_glbExchgSubBitmap->Reset();
 				GetSubVals_Pushdown(regResult->Matches[i], regPattern, queryType, m_glbExchgSubBitmap, bitmap);
 			}
-			else if(validCnt == realSetNum)//最后一个直接下推合并到原bitmap中
+			else if(validCnt == realSetNum)//the last directly merges into bitmap
 			{
 				GetSubVals_Pushdown(regResult->Matches[i], regPattern, queryType, bitmap, NULL);
 				bitmap->Union(m_glbExchgSubBitmap);
 				break;
 			}
-			else//中间的，如果只有一个，则下推合并到m_glbExchgSubBitmap中，否则使用m_glbExchgSubTempBitmap进行下推缓冲
+			else//the middle, if only one, then merges into m_glbExchgSubBitmap，else into m_glbExchgSubTempBitmap for buffering
 			{
 				int setY=regResult->Matches[i].Count;
 				if(setY == 1)
@@ -1123,18 +1122,18 @@ int LogStoreApi::GetVals_Subpat_Pushdown_RefMap(int varName, const char* regPatt
 		{
 			if(regResult->Matches[i].BeValid == false) continue;
 			validCnt++;
-			if(validCnt == 1)//第一个下推合并到m_glbExchgSubBitmap中
+			if(validCnt == 1)
 			{
 				m_glbExchgSubBitmap->Reset();
 				GetSubVals_Pushdown(regResult->Matches[i], regPattern, queryType, m_glbExchgSubBitmap, refBitmap);
 			}
-			else if(validCnt == realSetNum)//最后一个直接下推合并到原bitmap中
+			else if(validCnt == realSetNum)
 			{
 				GetSubVals_Pushdown(regResult->Matches[i], regPattern, queryType, bitmap, refBitmap);
 				bitmap->Union(m_glbExchgSubBitmap);
 				break;
 			}
-			else//中间的，如果只有一个，则下推合并到m_glbExchgSubBitmap中，否则使用m_glbExchgSubTempBitmap进行下推缓冲
+			else
 			{
 				int setY=regResult->Matches[i].Count;
 				if(setY == 1)
@@ -1246,6 +1245,10 @@ int LogStoreApi::GetDicIndexs(int varName, const char* regPattern, int queryType
 				;
 			}
 		}
+		// for(int i=0; i< num; i++)
+		// {
+		// 	printf("dicQuerySegs %s %d\n", dicQuerySegs, strlen(dicQuerySegs));
+		// }
 	}
 	delete regResult;
 	return num;
@@ -1602,6 +1605,12 @@ int LogStoreApi::Materializ_Dic_Kmp(int varname, BitMap* bitmap, int entryCnt, O
 			}
 		}
 	}
+	if(entryVars)
+	{
+		delete entryVars;
+		entryVars = NULL;
+	}
+	delete dicVars;
 	return 1;
 }
 
@@ -1646,7 +1655,6 @@ int LogStoreApi::Materializ_Subpat(SubPattern* subpat, int varname, BitMap* bitm
 						{
 							if(varIndex==0)
 							{
-								//printf("--------%s--%d\n", outfilename.c_str(), i);
 								memcpy(vars + i * MAX_VALUE_LEN, m_varouts[outfilename]->Outliers[bitmap->GetIndex(i)], strlen(m_varouts[outfilename]->Outliers[bitmap->GetIndex(i)]));
 							}
 						}
@@ -1658,7 +1666,39 @@ int LogStoreApi::Materializ_Subpat(SubPattern* subpat, int varname, BitMap* bitm
 				}
 				else
 				{
-					;
+					char* entryVars = new char[MAX_VALUE_LEN * entryMeta->lines];
+					memset(entryVars, '\0', MAX_VALUE_LEN * entryMeta->lines);
+					GetCvarsByBitmap_Diff(entryMeta->data, 0, bitmap, entryVars, entryCnt, MAX_VALUE_LEN);
+					for(int i=0;i< entryCnt;i++)
+					{
+						offsetT = i * MAX_VALUE_LEN;
+						offsetV = i * MAX_VALUE_LEN;
+						offsetV += strlen(vars + offsetV);
+						memcpy(vars + offsetV, constStr.c_str(), constStrLen);
+						offsetV += constStrLen;
+						if(m_varouts[outfilename] != NULL && (entryVars + offsetT)[0] == ' ')//get from outliers
+						{
+							if(varIndex==0)
+							{
+								//fine the line
+								map<int,char*>::iterator itor = m_varouts[outfilename]->Outliers.find(bitmap->GetIndex(i));
+								if(itor != m_varouts[outfilename]->Outliers.end())
+								{
+									printf("find in var outliers: %d %d\n", outfilename, bitmap->GetIndex(i));
+									memcpy(vars + i * MAX_VALUE_LEN, m_varouts[outfilename]->Outliers[bitmap->GetIndex(i)], strlen(m_varouts[outfilename]->Outliers[bitmap->GetIndex(i)]));
+								}
+							}
+						}
+						else
+						{
+							memcpy(vars + offsetV, entryVars + offsetT, strlen(entryVars + offsetT));
+						}
+					}
+					if(entryVars)
+					{
+						delete[] entryVars;
+						entryVars = NULL;
+					} 
 				}
 			}
 			else
@@ -1673,6 +1713,7 @@ int LogStoreApi::Materializ_Subpat(SubPattern* subpat, int varname, BitMap* bitm
 						memcpy(vars + offsetV, constStr.c_str(), constStrLen);
 						offsetV += constStrLen;
 						char* content = entryMeta->data + offsetT;
+						//if the last is space, then get from the outlier
 						if(m_varouts[outfilename] != NULL && content[entryLen-1] == ' ')
 						{
 							if(varIndex==0)
@@ -1689,7 +1730,38 @@ int LogStoreApi::Materializ_Subpat(SubPattern* subpat, int varname, BitMap* bitm
 				}
 				else
 				{
-					;
+					char* entryVars = new char[MAX_VALUE_LEN * entryMeta->lines];
+					memset(entryVars, '\0', MAX_VALUE_LEN * entryMeta->lines);
+					GetCvars_Diff(entryMeta->data, entryVars, entryCnt, MAX_VALUE_LEN);
+					for(int i=0;i< entryCnt;i++)
+					{
+						offsetT = i * MAX_VALUE_LEN;
+						offsetV = i * MAX_VALUE_LEN;
+						offsetV += strlen(vars + offsetV);
+						memcpy(vars + offsetV, constStr.c_str(), constStrLen);
+						offsetV += constStrLen;
+						if(m_varouts[outfilename] != NULL && (entryVars + offsetT)[0] == ' ')//get from outliers
+						{
+							if(varIndex==0)
+							{
+								map<int,char*>::iterator itor = m_varouts[outfilename]->Outliers.find(i);
+								if(itor != m_varouts[outfilename]->Outliers.end())
+								{
+									printf("find in var outliers: %d %d\n", outfilename, i);
+									memcpy(vars + i * MAX_VALUE_LEN, m_varouts[outfilename]->Outliers[i], strlen(m_varouts[outfilename]->Outliers[i]));
+								}
+							}
+						}
+						else
+						{
+							memcpy(vars + offsetV, entryVars + offsetT, strlen(entryVars + offsetT));
+						}
+					}
+					if(entryVars)
+					{
+						delete[] entryVars;
+						entryVars = NULL;
+					}
 				}
 			}
 			varIndex++;
@@ -1779,7 +1851,7 @@ int LogStoreApi::Materialization(int pid, BitMap* bitmap, int bitmapSize, int ma
 			Materializ_Pats(pat->VarNames[i], bitmap, entryCnt, output[i]);
 			double  time2 = ___StatTime_End(tt1);
 			materTime += time2;
-			SyslogDebug("----varname:%s(%d), %lfs.\n", FormatVarName(pat->VarNames[i]), pat->VarNames[i], time2);
+			SyslogDebug("----varname:(%d)%s, %lf sec.\n", pat->VarNames[i], FormatVarName(pat->VarNames[i]), time2);
 		}
 	}
 	//print
@@ -1928,6 +2000,14 @@ int LogStoreApi::DisConnect()
 
 int LogStoreApi::GetPatterns(OUT vector< pair<string, LogPattern> > &patterns)
 {
+	// vector< pair<string, LogPattern> > name_score_vec(m_patterns.begin(), m_patterns.end()); 
+	// sort(name_score_vec.begin(), name_score_vec.end(), CmpLogPatternByValue()); 
+	// patterns = name_score_vec;
+	// int vecSize = name_score_vec.size();
+	// for (int i=0; i< vecSize;i++)
+	// {
+	// 	patterns[i] = name_score_vec[i];
+	// }
 	return 0;
 }
 
@@ -1957,6 +2037,8 @@ int LogStoreApi::GetVariablesByPatId(int patId, RegMatch *regResult)
 	return 0;
 }
 
+//select vals -P E10 -V V3~0 -reg 1582675736   3
+//select vals -P E10 -V V5~0 -reg 5699476115821218558   2
 int LogStoreApi::GetValuesByVarName_Reg(int varName, const char* regPattern, OUT char* vars, OUT BitMap* bitmap)
 {
 	int num = QueryByBM_Union(varName, regPattern, QTYPE_ALIGN_ANY, bitmap);
@@ -2007,16 +2089,19 @@ int LogStoreApi::SearchInVar_Union(int varName, char *querySeg, short querySegTa
 		}
 		else if(itorsub->second->Type == VAR_TYPE_VAR) //.var
 		{
+			Statistic.total_queried_cap_cnt++;
 			//filter length and tag
 			//bool beFilterFailed = (itorsub->second->Tag & querySegTag != querySegTag) || strlen(querySeg) > itorsub->second->ContSize;
 			bool beLenFilterFailed = strlen(querySeg) > itorsub->second->ContSize;
 			bool beTagFilterFailed = itorsub->second->Tag & querySegTag != querySegTag;
 			if(INC_TEST_JUDGETAG && beLenFilterFailed)
 			{
+				Statistic.length_filtered_cap_cnt++;
 				return bitmapLen;
 			}
 			if(INC_TEST_JUDGETAG && beTagFilterFailed)
 			{
+				Statistic.tag_filtered_cap_cnt++;
 				return bitmapLen;
 			}
 
@@ -2035,7 +2120,7 @@ int LogStoreApi::SearchInVar_Union(int varName, char *querySeg, short querySegTa
 	}
 	else//not find, output error
 	{
-		SyslogError("Error: not find var in variables.txt(SearchInVar_Union), varname= %s\n", FormatVarName(varName));
+		SyslogError("Error: not find var in variables.txt(SearchInVar_Union), varname: %s(%d), filename:%s\n", FormatVarName(varName), varName, FileName.c_str());
 	}
 	return bitmapLen;
 }
@@ -2087,7 +2172,7 @@ int LogStoreApi::SearchInVar_AxB_Union(int varName, char *queryA, char *queryB, 
 	}
 	else//not find, output error
 	{
-		SyslogError("Error: not find var in variables.txt, varname= %s\n", FormatVarName(varName));
+		SyslogError("Error: not find var in variables.txt, varname: %s(%d), filename:%s\n", FormatVarName(varName), varName, FileName.c_str());
 	}
 	return bitmapLen;
 }
@@ -2129,7 +2214,7 @@ int LogStoreApi::SearchInVar_Pushdown(int varName, char *querySeg, short querySe
 	}
 	else//no subpattern
 	{
-		SyslogError("Error: not find var in variables.txt, varname= %s\n", FormatVarName(varName));
+		SyslogError("Error: not find var in variables.txt, varname: %s(%d), filename:%s\n", FormatVarName(varName), varName, FileName.c_str());
 	}
 	SyslogDebug("----%s : %d\n", FormatVarName(varName), bitmapLen);
 	return bitmapLen;
@@ -2170,7 +2255,7 @@ int LogStoreApi::SearchInVar_Pushdown_RefMap(int varName, char *querySeg, short 
 	}
 	else//no subpattern
 	{
-		SyslogError("Error: not find var in variables.txt, varname= %s\n", FormatVarName(varName));
+		SyslogError("Error: not find var in variables.txt, varname: %s(%d), filename:%s\n", FormatVarName(varName), varName, FileName.c_str());
 	}
 	SyslogDebug("----%s : %d\n", FormatVarName(varName), bitmapLen);
 	return bitmapLen;
@@ -2286,6 +2371,7 @@ int LogStoreApi::SearchMultiInPattern(LogPattern* logPat, char **querySegs, int 
 				}
 				else
 				{
+					//degraded to string matching 
 					segLen = strlen(logPat->Segment[iPos]);
 					isMatched = SeqMatching_BothSide(logPat->Segment[iPos], segLen, querySegs[j+ argCountS], querySegLens[j]);
 					if(isMatched > 0)//matched!
@@ -2317,15 +2403,15 @@ int LogStoreApi::SearchMultiInPattern(LogPattern* logPat, char **querySegs, int 
 			{
 				if(flag[flagIndex] == 0 && m_glbExchgPatmap->GetSize() != 0)//pushdown to query vars
 				{
-					if(flagIndex == 0)
+					if(flagIndex == 0)//first seg matches the variable, then the remainings are right alighed
 					{
 						queryType = QTYPE_ALIGN_RIGHT;
 					}
-					else if(flagIndex == segSize-1)
+					else if(flagIndex == segSize-1)//last seg in var, then left aligned
 					{
 						queryType = QTYPE_ALIGN_LEFT;
 					}
-					else
+					else//the middles are must fully matched
 					{
 						queryType = QTYPE_ALIGN_FULL;
 					}
@@ -2605,12 +2691,12 @@ int LogStoreApi::SearchByLogic_not(char *args[MAX_CMD_ARG_COUNT], int argCountS,
 			{
 				Search_AxB_InPattern(itor->second, wArray[0], wArray[1], queryStrTag, queryStr2Tag, bitmaps[itor->first]);
 			}
-			if(bitmaps[itor->first]->BeSizeFul())//补集为0
+			if(bitmaps[itor->first]->BeSizeFul())
 			{
 				delete bitmaps[itor->first];
 				bitmaps[itor->first] = NULL;
 			}
-			else//取反
+			else
 			{
 				bitmaps[itor->first]->Reverse();
 			}		
@@ -2638,10 +2724,6 @@ int LogStoreApi::SearchByLogic_not(char *args[MAX_CMD_ARG_COUNT], int argCountS,
 					delete bitmaps[itor->first];
 					bitmaps[itor->first] = NULL;
 				}
-			}
-			else
-			{
-				;
 			}
 		}
 	}
@@ -2671,10 +2753,6 @@ int LogStoreApi::SearchByLogic_not(char *args[MAX_CMD_ARG_COUNT], int argCountS,
 				delete bitmaps[OUTL_PAT_NAME];
 				bitmaps[OUTL_PAT_NAME] = NULL;
 			}
-		}
-		else
-		{
-			;
 		}
 	}
 	//delete
@@ -2803,10 +2881,6 @@ int LogStoreApi::SearchByLogic_norm(char *args[MAX_CMD_ARG_COUNT], int argCountS
 					bitmaps[itor->first] = bitmap;
 				}
 			}
-			else
-			{
-				;
-			}
 		}
 		else
 		{
@@ -2870,10 +2944,6 @@ int LogStoreApi::SearchByLogic_norm(char *args[MAX_CMD_ARG_COUNT], int argCountS
 				delete bitmaps[OUTL_PAT_NAME];
 				bitmaps[OUTL_PAT_NAME] = NULL;
 			}
-		}
-		else
-		{
-			;
 		}
 	}
 	else
@@ -3018,10 +3088,6 @@ int LogStoreApi::SearchByLogic_norm_RefMap(char *args[MAX_CMD_ARG_COUNT], int ar
 					}
 				}
 			}
-			else
-			{
-				;
-			}
 		}
 	}
 	//search in outliers
@@ -3100,10 +3166,6 @@ int LogStoreApi::SearchByLogic_norm_RefMap(char *args[MAX_CMD_ARG_COUNT], int ar
 				bitmaps[OUTL_PAT_NAME] = NULL;
 			}
 		}
-		else
-		{
-			;
-		}
 	}
 
 	//delete
@@ -3181,7 +3243,7 @@ int LogStoreApi::SearchByLogic_and(char *args[MAX_CMD_ARG_COUNT], int argCountS,
 					DeepCloneMap(bitmaps, m_sessions[queryStr]);
 				}
 			}
-			else
+			else//enable cache 
 			{
 				DeepCloneMap(m_sessions[queryStr], bitmaps);
 			}
@@ -3196,6 +3258,7 @@ int LogStoreApi::SearchByLogic_and(char *args[MAX_CMD_ARG_COUNT], int argCountS,
 	LISTSESSIONS::iterator ifind = m_sessions.find(queryStr);
 	if(ifind == m_sessions.end())
 	{
+		//COW (undo)
 		if(flag == 1)
 		{
 			SearchByLogic_not(args, temp, argCountE, bitmaps);
@@ -3236,6 +3299,41 @@ int LogStoreApi::SearchByLogic_OR(char *args[MAX_CMD_ARG_COUNT], int argCountS, 
 int LogStoreApi::SearchByLogic(char *args[MAX_CMD_ARG_COUNT], int argCount, OUT LISTBITMAPS& bitmaps)
 {
 	SearchByLogic_OR(args, 0, argCount-1, bitmaps);
+	/*
+	int temp =0;
+	int orLen = strlen(LOGIC_OR);
+	LISTBITMAPS::iterator itor;
+	LISTBITMAPS::iterator ifind;
+	for(int i=0; i< argCount; i++)
+	{
+		if(strlen(args[i]) == orLen && stricmp(args[i], LOGIC_OR) == 0)
+		{
+			LISTBITMAPS tempbitmaps;
+			SearchByLogic_OR(args, temp, i-2, tempbitmaps);
+			itor = tempbitmaps.begin();
+			for (; itor != tempbitmaps.end();itor++)
+			{
+				ifind = bitmaps.find(itor->first);
+				if(ifind != bitmaps.end())
+					bitmaps[itor->first]->Union(itor->second);
+				else		
+					bitmaps[itor->first] = itor->second;
+			}
+			temp = i+2;
+			i++;
+		}
+	}
+	LISTBITMAPS tempbitmaps;
+	SearchByLogic_OR(args, temp, argCount-1, tempbitmaps);
+	itor = tempbitmaps.begin();
+	for (; itor != tempbitmaps.end();itor++)
+	{
+		ifind = bitmaps.find(itor->first);
+		if(ifind != bitmaps.end())
+			bitmaps[itor->first]->Union(itor->second);
+		else		
+			bitmaps[itor->first] = itor->second;
+	}*/
 	return 0;
 }
 
@@ -3355,10 +3453,10 @@ int LogStoreApi::SearchByWildcard_Token(char *args[MAX_CMD_ARG_COUNT], int argCo
 			{
 				entryCnt = itor->second->GetSize();
 			}
-			Syslog("%s: entryCnt: %d.\n", FormatVarName(itor->first), entryCnt);
+			SysCodeRead("%s: entryCnt: %d.\n", FormatVarName(itor->first), entryCnt);
 			if(matNum - matnum > 0)
 			{
-				matnum += Materialization(itor->first, itor->second, entryCnt, matNum - matnum);
+				//matnum += Materialization(itor->first, itor->second, entryCnt, matNum - matnum);
 			}
 			num += entryCnt;
 		}
@@ -3367,7 +3465,7 @@ int LogStoreApi::SearchByWildcard_Token(char *args[MAX_CMD_ARG_COUNT], int argCo
 	RunStatus.SearchTotalEntriesNum = num;
 	if(num > 0)
 	{
-		Syslog("%s: Total query num: %d\n",FileName.c_str(), num);
+		SysCodeRead("%s: Total query num: %d\n",FileName.c_str(), num);
 		SyslogPerf("It takes %lfs (%lfs) to Materialization(%d).\n",timem, materTime, matnum);
 	}
 	RunStatus.MaterializFulTime = timem;
@@ -3375,10 +3473,12 @@ int LogStoreApi::SearchByWildcard_Token(char *args[MAX_CMD_ARG_COUNT], int argCo
 	//output outliers
 	if(bitmaps[OUTL_PAT_NAME] != NULL)
 	{
-		MaterializOutlier(bitmaps[OUTL_PAT_NAME], bitmaps[OUTL_PAT_NAME]->GetSize(), matNum);
+		//MaterializOutlier(bitmaps[OUTL_PAT_NAME], bitmaps[OUTL_PAT_NAME]->GetSize(), matNum);
 	}
+
 	return matnum;
 }
+
 
 //https://blog.csdn.net/yangbingzhou/article/details/51352648
 int LogStoreApi::SearchByReg(const char *regPattern)

@@ -5,8 +5,8 @@
 #ifndef CMD_LOGSTOREAPI_H
 #define CMD_LOGSTOREAPI_H
 
-#include "../compression/Coffer.h"
-#include "../compression/LZMA/LzmaLib.h"
+#include "/apsarapangu/disk2/compression_clove/Coffer.h"
+#include "/apsarapangu/disk2/compression_clove/LZMA/LzmaLib.h"
 //use char* as a key will cause unknown error
 typedef list<char*> LISTCHARS;
 typedef map<int, LogPattern*> LISTPATS;
@@ -68,9 +68,12 @@ private:
 	BitMap* m_glbExchgSubBitmap;//to cache bitmap on subvars
 	BitMap* m_glbExchgSubTempBitmap;//to cache bitmap on subvars while multi-pushdown
 
+	//int maxCnt;
+	
 
 public:
 	RunningStatus RunStatus;
+	Statistics Statistic;
 	string FileName;
 
 private:
@@ -89,7 +92,7 @@ private:
 	int AddMainPatternToMap(char etag, int eid, int count, char* content);
 	int AddSubPatternToMap(int vid, char type, char* content);
 	int LoadOutliers(IN char* deCompressedBuf, int lineCount);
-	int LoadVarOutliers(int filename, int lines);
+	int LoadVarOutliers(int filename, int lines, int srcLen);
 
 	int LoadcVars(int varname, int lineCnt, OUT char* vars, int varsLineLen, int flag=true);
 	int LoadcVarsByBitmap(int varname, BitMap* bitmap, OUT char* vars, int entryCnt, int varsLineLen, int flag=true);

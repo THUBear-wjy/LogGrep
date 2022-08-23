@@ -251,7 +251,6 @@ int CmdOperator::SearchByExact_Token(char *queryStr)
 	return 0;
 }
 
-//https://blog.csdn.net/yangbingzhou/article/details/51352648
 int CmdOperator::SearchByReg(char *args[MAX_CMD_ARG_COUNT], int argCount)
 {
 	

@@ -48,11 +48,8 @@ extern void InitBM(const char* pattern, int* &badc, int* &goods);
 void BuildBadC(const char* pattern, int* &badc);
 void BuildGoodS(const char *pattern, int* &goods);
 
-int BM_Fixed_AlignR(char* text, int sIdx, int tLen, const char* pattern, BitMap* bitmap, int lineLen);
-int BM_Fixed_AlignL(char* text, int sIdx, int tLen, const char* pattern, BitMap* bitmap, int lineLen);
-int BM_Fixed_AlignR_UnionSkip(char* text, int sIdx, int tLen, const char* pattern, BitMap* bitmap, int lineLen);
-int BM_Fixed_AlignL_UnionSkip(char* text, int sIdx, int tLen, const char* pattern, BitMap* bitmap, int lineLen);
-int BM_Fixed_Anypos_UnionSkip(char* text, int sIdx, int tLen, const char* pattern, BitMap* bitmap, int lineLen);
+int BM_Fixed_AlignR(char* text, int sIdx, int tLen, const char* pattern, BitMap* bitmap, int lineLen, bool enableUnionSkip=false);
+int BM_Fixed_AlignL(char* text, int sIdx, int tLen, const char* pattern, BitMap* bitmap, int lineLen, bool enableUnionSkip=false);
 
 int SeqMatching_AlignLeft(const char *S, int sLen, const char *T, int tLen);
 int SeqMatching_AlignLeft(const char * S, int sLen, const char * T, int tLen, int* badc, int* goods);
