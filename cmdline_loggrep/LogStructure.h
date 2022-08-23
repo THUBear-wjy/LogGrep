@@ -44,8 +44,12 @@ using namespace std;
 #define MAX_THREAD_PARALLEL		1
 #define MAX_FILE_CNT			    4000
 
-#define DIR_PATH_DEFAULT		"../example_zip/Ssh"       //varied
-#define FILE_NAME_DEFAULT   "1.log.zip"//"Apsara.zip"
+//#define DIR_PATH_DEFAULT		"/home/clove/ABout/Fastcgi"
+//#define DIR_PATH_DEFAULT		"/apsarapangu/disk10/LogStore/THULR_CmdLine/output/logcompression"
+// /apsarapangu/disk10/LogStore/compression/decompressTest/THULR -I 2.log.zip -O /apsarapangu/disk10/LogStore/workertest/
+//#define DIR_PATH_DEFAULT		"/apsarapangu/disk9/LogGrepStatic_2/Metering"     //fixed
+#define DIR_PATH_DEFAULT		"/apsarapangu/disk9/LogGrep/Android"       //varied
+#define FILE_NAME_DEFAULT   "351.log.zip"//"Apsara.zip"
 
 #define TOKEN             " \t:=,"
 #define WILDCARD          "*"
@@ -100,16 +104,17 @@ using namespace std;
 #define MATCH_PART         2
 #define MATCH_ONPAT        9
 
-#define setbit(x,y) x|=(1<<y)
-#define clrbit(x,y) x&=~(1<<y)
-#define getbit(x,y) (x>>y)&1  
+#define setbit(x,y) x|=(1<<y) //set the y pos of x as 1
+#define clrbit(x,y) x&=~(1<<y) //set the y pos of x as 0
+#define getbit(x,y) (x>>y)&1  //get the y pos value of x
 
-#define INC_TEST_JUDGELEN        1     
-#define INC_TEST_JUDGETAG        1     
-#define INC_TEST_FIXED           1     
-#define INC_TEST_PUSHDOWN        1     
-#define INC_TEST_INDEXMAP         
-#define INC_TEST_SESSION         1      
+#define INC_TEST_JUDGELEN        1      //whether enble length filters
+#define INC_TEST_JUDGETAG        1      //whether enble stamp filters (1~63)
+#define INC_TEST_FIXED           1      //whether enble fixed length
+#define INC_TEST_PUSHDOWN        1      //whether enble pruning
+#define INC_TEST_INDEXMAP               //whether enble optimized bitmap
+#define INC_TEST_SESSION         1      //whether enble session-level optimization
+#define ENABLE_CACHE_REPLACE     0      //whether enble cache replacement strategy (FIFO)
 
 
 typedef struct GlbMeta
@@ -146,7 +151,7 @@ typedef struct LogPattern
   int SegSize;
   char* Segment[MAX_CMD_PARAMS_COUNT];
   int SegAttr[MAX_CMD_PARAMS_COUNT];//0:const 2:delim >2^16:value  
-  int VarNames[MAX_CMD_PARAMS_COUNT];//E1 :<V0>= E1_V0
+  int VarNames[MAX_CMD_PARAMS_COUNT];//E1 :<V0>= E1_V0 
   LogPattern()
   {
     Count =0;
@@ -241,6 +246,7 @@ typedef struct SubPattern
             segSize++;
           }
           sscanf(pat + lPos, "<%d>", &tag);
+          // printf("%d-%d-%d-%s-%d\n", lPos, rPos, lastPos, pat + lPos, tag);
           segTag[segSize] = INC_TEST_JUDGETAG == 1? tag : 63;
           segCont[segSize] = NULL;
           segSize++;
@@ -606,7 +612,6 @@ class BitMap
       Bitmap |= target->Bitmap;
     }
 };
-
 #endif
 
 typedef struct RunningStatus
@@ -633,6 +638,36 @@ typedef struct RunningStatus
     SearchOutliersNum =0;
   }
 }RunningStatus;
+
+typedef struct Statistics
+{
+  //columns
+	int total_capsule_cnt; 
+	int total_decom_capsule_cnt; //(query+materialization)
+  //total_filtered_cap_cnt + valid_cap_filter_cnt <= total_queried_cap_cnt
+	int total_queried_cap_cnt;
+	int total_filtered_cap_cnt;//= length_filtered_cap_cnt + tag_filtered_cap_cnt
+	int length_filtered_cap_cnt;
+	int tag_filtered_cap_cnt;
+	int valid_cap_filter_cnt;//The examined capsules indeed contain valid data 
+  int tag_cap_mix_cnt;//Number of mixed data types included in the tag 
+
+  //rows，bitmap pruning+ Horizontal division +local metadata design
+
+	Statistics()
+	{
+		total_capsule_cnt =0;
+		total_decom_capsule_cnt =0;
+
+		total_queried_cap_cnt=0;
+		total_filtered_cap_cnt=0;
+		length_filtered_cap_cnt=0;
+		tag_filtered_cap_cnt=0;
+    valid_cap_filter_cnt=0;
+    tag_cap_mix_cnt=0;
+	}
+}Statistics;
+
 
 typedef struct LcsMatch
 {

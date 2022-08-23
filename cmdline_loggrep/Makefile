@@ -1,8 +1,8 @@
 ####### Output directory
 FILE_DIR = 
 TEMP_DIR = 
-REFER_DIR = ../compression/
-REFER2_DIR = ../compression/LZMA/
+REFER_DIR = ../../compression/
+REFER2_DIR = ../../compression/LZMA/
 EXE_DIR = ../output/
 READLINE_DIR = ../readline/
 TERMCAP_DIR = ../termcap/
@@ -17,7 +17,7 @@ LANGUAGE = -D	ENGLISH
 READLINE = -D	READLINE_LIBRARY
 ##LANGUAGE = -D	CHINESE
 
-BIN_OBJECT	= LogGrep-grep
+BIN_OBJECT	= thulr_cmdline
 READLINELIB_OBJECT = libreadline.a
 HISLIB_OBJECT = libhistory.a
 TERMCAPLIB_OBJECT = libtermcap.a
@@ -67,10 +67,9 @@ H_OBJECTS	=	$(FILE_DIR)BaseCmd.h \
 
 
 ####### Compile
-#######-l dl: dlopen dlerror dlclose dlsym 未定义的引用的解决方案 
+#######-l dl: dlopen dlerror dlclose dlsym
 ######-l pthread: pthread_create
 ######-l rt:realtime
-######在gcc编译的时候，如果文件a依赖于文件b，那么编译的时候必须把a放前面，b放后面。
 
 all: APP clean
 

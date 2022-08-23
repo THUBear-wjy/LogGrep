@@ -20,7 +20,7 @@ protected:
 protected:
 	/*get params from string splitted by ','
 	** if ids is not int, then take default value: 0
-	** format string:(<id1,id2,id3��>)
+	** format string:(<id1,id2,id3>)
 	** out params: array
 	** return: count of params
 	*/
@@ -28,7 +28,7 @@ protected:
 	
 	/*get params from string splitted by ','
 	** if ids is not unsigned int, then take default value: 0
-	** format string:(<id1,id2,id3��>)
+	** format string:(<id1,id2,id3>)
 	** out params: array
 	** return: count of params
 	*/
