@@ -30,6 +30,9 @@ Red Hat 4.8.5 with Linux kernel 3.10.0
 ## Compiler Version
 gcc version 4.8.5 20150623
 
+## Other requirements
+Python version >= 3.6.8, use ``pip3 install --upgrade requests`` to install non-listed requirement
+
 # Compilation and quick test
 ## Compilation
 ``cd ./compression``

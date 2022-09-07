@@ -131,6 +131,8 @@ if __name__ == "__main__":
     #init params
     input_path = "../example/"
     output_path = "../example_zip/"
+    if(not os.path.exists(output_path)):
+        os.mkdir(output_path)
     is_padding = "T"
     maxThreadNum = 4
     maxSingleThreadProcFilesNum = 0

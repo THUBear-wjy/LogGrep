@@ -5,8 +5,8 @@
 #ifndef CMD_LOGSTOREAPI_H
 #define CMD_LOGSTOREAPI_H
 
-#include "/apsarapangu/disk2/compression_clove/Coffer.h"
-#include "/apsarapangu/disk2/compression_clove/LZMA/LzmaLib.h"
+#include "../compression/Coffer.h"
+#include "../compression/LZMA/LzmaLib.h"
 //use char* as a key will cause unknown error
 typedef list<char*> LISTCHARS;
 typedef map<int, LogPattern*> LISTPATS;

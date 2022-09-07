@@ -44,12 +44,8 @@ using namespace std;
 #define MAX_THREAD_PARALLEL		1
 #define MAX_FILE_CNT			    4000
 
-//#define DIR_PATH_DEFAULT		"/home/clove/ABout/Fastcgi"
-//#define DIR_PATH_DEFAULT		"/apsarapangu/disk10/LogStore/THULR_CmdLine/output/logcompression"
-// /apsarapangu/disk10/LogStore/compression/decompressTest/THULR -I 2.log.zip -O /apsarapangu/disk10/LogStore/workertest/
-//#define DIR_PATH_DEFAULT		"/apsarapangu/disk9/LogGrepStatic_2/Metering"     //fixed
-#define DIR_PATH_DEFAULT		"/apsarapangu/disk9/LogGrep/Android"       //varied
-#define FILE_NAME_DEFAULT   "351.log.zip"//"Apsara.zip"
+#define DIR_PATH_DEFAULT		"../example_zip/Apache"
+#define FILE_NAME_DEFAULT   "0.log.zip"
 
 #define TOKEN             " \t:=,"
 #define WILDCARD          "*"

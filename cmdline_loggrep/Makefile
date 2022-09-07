@@ -1,8 +1,8 @@
 ####### Output directory
 FILE_DIR = 
 TEMP_DIR = 
-REFER_DIR = ../../compression/
-REFER2_DIR = ../../compression/LZMA/
+REFER_DIR = ../compression/
+REFER2_DIR = ../compression/LZMA/
 EXE_DIR = ../output/
 READLINE_DIR = ../readline/
 TERMCAP_DIR = ../termcap/
