@@ -14,8 +14,8 @@
 using namespace std;
 
 #define Syslog				printf
-#define SyslogError			printf
-#define SyslogWarnning		printf
+#define SyslogError			//printf
+#define SyslogWarnning		//printf
 #define SyslogDebug       //printf
 #define SysCodeRead       //printf
 #define SyslogPerf        //printf

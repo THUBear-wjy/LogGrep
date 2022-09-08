@@ -61,7 +61,7 @@ Then you can find compressed files in ./example_zip/
 
 For example, to run query on Apache logs, you can use command as follow:
 
-``./thulr_cmdline "error and Invalid URI in request" ./example_zip/Apache``
+``./thulr_cmdline ../example_zip/Apache "error and Invalid URI in request"``
 
 # Usage instructions
 To use LogGrep to compress and query their logs, users needs
@@ -70,37 +70,39 @@ Process original big log file as a folder such as ./DIR (like one of the foler u
 ## Step 2: compress logs
 ``cd ./compression``
 
-``python3 LogGrep-compression.py -I ./DIR -O ./DIR_zip``
+``python3 LogGrep-compression.py -I [Original Folder] -O [Compressed Folder]``
 ## step 3: query logs
 ``cd ./cmdline_loggrep``
 
-``./thulr_cmdline [YOUR QUERY STATEMENT] ./DIR_zip``
+``./thulr_cmdline [Compressed Folder] [YOUR QUERY STATEMENT]``
 
 # Reproduce Results
 ## Testing dataset
-16 types of open access logs can be downloaded at https://zenodo.org/record/1596245#.Yv3zYOxBxqs
+16 types of open access logs can be downloaded at https://zenodo.org/record/7056802#.Yxm1RexBwq1
 ## Excution commands
-See Usage instructions and the query commands for each type of logs can be found in ./query.txt
+The query commands for each type of logs can be found in ./query.txt (assume all logs are stored under ./example_zip)
 ## Claimed results
-|  LogType   | Original Size(KB) |Compressed Size(KB)  | Compressed Speed(s) | Query speed(s) |
-| ----- |----- | ------ | ------ | ------ |
-| Android | 187768 | 7556 | 41.93 | 0.80 |
-|  Apache| 5016 | 120  | 0.80 | 0.01 | 
-|  Bgl | 725772 | 20996 | 156.37 | 0.46 |
-|  Hadoop| 16814436 | 331516 | 2183.61 | 4.30 |
-| Hdfs| 1541004 | 81852 | 375.33 | 3.00 |
-| Healthapp| 22980 | 948 | 5.49 | 0.11 |
-| Hpc| 32768 | 1060 | 6.88 | 0.15 | 
-| Linux| 2296 | 116 | 0.58 | 0.02 |
-| Mac| 16484 | 592 | 2.83 | 0.07 |
-| Openstack| 60004 | 3172 | 7.97 | 0.03 |
-| Proxifier| 2484 | 128 | 0.50 | 0.02 |
-| Spark| 2839836 | 56484 | 600.18 | 1.00 |
-| Ssh| 71700 | 1544 | 11.21 | 0.03 |
-| Thunderbird| 31043268 | 622200 | 4973.00  | 17.00 |
-| Windows| 27356156 | 61428 | 3185.00 | 4.80 |
-| Zookeeper| 10184 | 196 | 1.01 | 0.02 |
-* we run compression in parallel, here we list the accumlate results
+|  LogType   | Original Size(KB) |Compressed Size(KB)  | Total Compression Latency(s) | Accumulated Compression Latency(s)| Query Latency(s) |
+| ----- |----- | ------ | ------ | ------ | ------ |
+| Android | 186984 | 7556 | 14.62 | 40.84 | 0.80 |
+|  Apache| 5020 | 120  | 0.79 | 0.79 | 0.01 | 
+|  Bgl | 725796 | 20996 | 34.27 | 119.77 | 0.46 |
+|  Hadoop| 16814928 | 331516 | 469.54 | 1843.33 | 4.74 |
+| Hdfs| 1530136 | 81852 | 60.59 | 237.84 | 3.02 |
+| Healthapp| 22736 | 948 | 5.40 | 5.40 | 0.11 |
+| Hpc| 32348 | 1060 | 6.77 | 6.77 | 0.01 | 
+| Linux| 2300 | 116 | 0.56 | 0.56 | 0.02 |
+| Mac| 16392 | 592 | 2.76 | 2.76 | 0.07 |
+| Openstack| 60008 | 3172 | 7.56 | 7.56 | 0.03 |
+| Proxifier| 2468 | 128 | 0.49 | 0.49 | 0.02 |
+| Spark| 2839924 | 56484 | 136.38 | 524.17 | 1.11 |
+| Ssh| 71068 | 1544 | 10.50 | 11.43 | 0.03 |
+| Thunderbird| 31044220 | 622200 | 1149.92 | 4494.55  | 17.00 |
+| Windows| 27245112 | 61428 | 348.37 | 1376.77 | 4.80 |
+| Zookeeper| 10116 | 196 | 0.99 | 0.99 | 0.02 |
+* Use Linux ``du -k [DIR]`` to see the Original/Compressed size.
+* We run compression in parallel with 4 threads, here we list both total and accumlated results. A time statistic file can be found under ./compression when fininshing compression.
+* Query latency includes "LogMetaTime" + "SearchTotalTime".
 
 ## Compared system (Baseline)
 ### CLP

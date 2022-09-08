@@ -1,49 +1,31 @@
-Open LogHub dataset for reproduce (https://zenodo.org/record/1596245#.Yv3zYOxBxqs) our queries can be found as follow:
+./thulr_cmdline ../example_zip/Android "ERROR and socket read length failure -104"
 
-Android
-ERROR and socket read length failure -104
+./thulr_cmdline ../example_zip/Apache "error and Invalid URI in request"
 
-Apache
-error and Invalid URI in request
+./thulr_cmdline ../example_zip/Bgl "ERROR and R00-M1-ND"
 
-Bgl
-ERROR and R00-M1-ND
+./thulr_cmdline ../example_zip/Hadoop "ERROR and RECEIVED SIGNAL 15: SIGTERM and 2015-09-23"
 
-Hadoop
-ERROR and RECEIVED SIGNAL 15: SIGTERM and 2015-09-23
+./thulr_cmdline ../example_zip/Hdfs "error and blk_8846"
 
-Hdfs
-error and blk_8846
+./thulr_cmdline ../example_zip/Healthapp "Step_ExtSDM and totalAltitude=0"
 
-Healthapp
-Step_ExtSDM and totalAltitude=0
+./thulr_cmdline ../example_zip/Hpc "unavailable state and HWID=3378"
 
-Hpc
-unavailable state and HWID=3378
+./thulr_cmdline ../example_zip/Linux "authentication failure and rhost=221.230.128.214"
 
-Linux
-authentication failure and rhost=221.230.128.214
+./thulr_cmdline ../example_zip/Mac "failed and Err:-1 Errno:1"
 
-Mac
-failed and Err:-1 Errno:1
+./thulr_cmdline ../example_zip/Openstack "ERROR or WARNING and Unexpected error while running command"
 
-Openstack
-ERROR or WARNING and Unexpected error while running command
+./thulr_cmdline ../example_zip/Proxifier "HTTPS and play.google.com:443"
 
-Proxifier
-HTTPS and play.google.com:443
+./thulr_cmdline ../example_zip/Spark "ERROR and Error sending result"
 
-Spark
-ERROR and Error sending result
+./thulr_cmdline ../example_zip/Ssh "Received disconnect from and 202.100.179.208"
 
-Ssh
-Received disconnect from and 202.100.179.208
+./thulr_cmdline ../example_zip/Thunderbird "Doorbell ACK timeout"
 
-Thunderbird
-Doorbell ACK timeout
+./thulr_cmdline ../example_zip/Windows "Error and Failed to process single phase execution"
 
-Windows
-Error and Failed to process single phase execution
-
-Zookeeper
-ERROR and CommitProcessor
+./thulr_cmdline ../example_zip/Zookeeper "ERROR and CommitProcessor"

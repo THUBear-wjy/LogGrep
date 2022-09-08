@@ -3456,7 +3456,7 @@ int LogStoreApi::SearchByWildcard_Token(char *args[MAX_CMD_ARG_COUNT], int argCo
 			SysCodeRead("%s: entryCnt: %d.\n", FormatVarName(itor->first), entryCnt);
 			if(matNum - matnum > 0)
 			{
-				//matnum += Materialization(itor->first, itor->second, entryCnt, matNum - matnum);
+				matnum += Materialization(itor->first, itor->second, entryCnt, matNum - matnum);
 			}
 			num += entryCnt;
 		}
@@ -3473,7 +3473,7 @@ int LogStoreApi::SearchByWildcard_Token(char *args[MAX_CMD_ARG_COUNT], int argCo
 	//output outliers
 	if(bitmaps[OUTL_PAT_NAME] != NULL)
 	{
-		//MaterializOutlier(bitmaps[OUTL_PAT_NAME], bitmaps[OUTL_PAT_NAME]->GetSize(), matNum);
+		MaterializOutlier(bitmaps[OUTL_PAT_NAME], bitmaps[OUTL_PAT_NAME]->GetSize(), matNum);
 	}
 
 	return matnum;
