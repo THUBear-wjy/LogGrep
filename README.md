@@ -53,7 +53,7 @@ Then you can find compressed files in ./example_zip/
 
 ``cd ./cmdline_loggrep``
 
-``./thulr_cmdline [QUERY] [Compressed Folder]``
+``./thulr_cmdline [Compressed Folder] [QUERY]``
 
 [QUERY] is the query statement (which can be found in ./query.txt)
 
