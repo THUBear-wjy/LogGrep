@@ -32,6 +32,7 @@ gcc version 4.8.5 20150623
 
 ## Other requirements
 Python version >= 3.6.8, use ``pip3 install --upgrade requests`` to install non-listed requirement
+use ``yum groupinstall 'Development Tools`` to install other requirements.
 
 # Compilation and quick test
 ## Compilation
