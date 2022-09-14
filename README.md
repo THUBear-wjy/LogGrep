@@ -32,6 +32,7 @@ gcc version 4.8.5 20150623
 
 ## Other requirements
 Python version >= 3.6.8, use ``pip3 install --upgrade requests`` to install non-listed requirement
+
 use ``yum groupinstall 'Development Tools`` to install other requirements.
 
 # Compilation and quick test
@@ -69,7 +70,7 @@ For example, to run query on Apache logs, you can use command as follow:
 ``./thulr_cmdline ../example_zip/Apache "error and Invalid URI in request"``
 
 # Usage instructions
-To use LogGrep to compress and query their logs, users needs
+To use LogGrep to compress and query their logs, users need
 ## Step 1: preprocess logs
 Process original big log file as a folder such as ./DIR (like one of the foler under ./example/), insider which original log file is cut as several log blocks (each is no larger than 64MB).
 ## Step 2: compress logs
@@ -107,7 +108,7 @@ The query commands for each type of logs can be found in ./query.txt (assume all
 | Zookeeper| 10116 | 196 | 0.99 | 0.99 | 0.02 |
 * Use Linux ``du -k [DIR]`` to see the Original/Compressed size.
 * We run compression in parallel with 4 threads, here we list both total and accumlated results. A time statistic file can be found under ./compression when fininshing compression.
-* Query latency includes "LogMetaTime" + "SearchTotalTime".
+* Query latency includes "LoadMetaTime" + "SearchTotalTime".
 
 ## Compared system (Baseline)
 ### CLP
