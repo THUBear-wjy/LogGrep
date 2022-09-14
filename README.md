@@ -36,6 +36,10 @@ use ``yum groupinstall 'Development Tools`` to install other requirements.
 
 # Compilation and quick test
 ## Compilation
+``mkdir ./output``
+
+``mkdir ./example_zip``
+
 ``cd ./compression``
 
 ``make``
