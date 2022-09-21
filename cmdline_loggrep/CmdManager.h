@@ -3,8 +3,6 @@
 
 #include <stdio.h>
 #include "CmdInvoker.h"
-#include "../readline/readline.h"
-#include "../readline/history.h"
 
 // global var, defined in main
 extern int main_while_flag;

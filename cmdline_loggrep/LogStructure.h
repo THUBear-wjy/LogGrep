@@ -37,14 +37,14 @@ using namespace std;
 #define MAX_UNION_LINELEN     100
 #define MAX_UNION_BITMAPS     50
 #define MAX_DICENTY_LEN       10
-#define MAX_MATERIAL_SIZE     100
+#define MAX_MATERIAL_SIZE     200
 #define MAX_SESSION_SIZE      10  
 
 //multi thread ctrl
 #define MAX_THREAD_PARALLEL		1
 #define MAX_FILE_CNT			    4000
 
-#define DIR_PATH_DEFAULT		"../example_zip/Apache"
+#define DIR_PATH_DEFAULT		"../ThunderBird_zip"
 #define FILE_NAME_DEFAULT   "0.log.zip"
 
 #define TOKEN             " \t:=,"
@@ -234,19 +234,28 @@ typedef struct SubPattern
         }
         if(lPos >= 0 && rPos > lPos)
         {
-          if(lPos !=0 && lPos != lastPos)
+          int scanRst = sscanf(pat + lPos, "<V,%d>", &tag);
+          if(scanRst == 1 && tag > 0)
           {
-            segCont[segSize] = new char[lPos - lastPos +1]{'\0'};
-            strncpy(segCont[segSize], pat + lastPos, lPos - lastPos);
-            segTag[segSize] = SEG_TYPE_CONST;
+            if(lPos !=0 && lPos != lastPos)
+            {
+              segCont[segSize] = new char[lPos - lastPos +1]{'\0'};
+              strncpy(segCont[segSize], pat + lastPos, lPos - lastPos);
+              segTag[segSize] = SEG_TYPE_CONST;
+              segSize++;
+            }
+            
+            // printf("%d-%d-%d-%s-%d\n", lPos, rPos, lastPos, pat + lPos, tag);
+            segTag[segSize] = INC_TEST_JUDGETAG == 1? tag : 63;
+            segCont[segSize] = NULL;
             segSize++;
+            lastPos = rPos + 1;
+            tag =0;
           }
-          sscanf(pat + lPos, "<%d>", &tag);
-          // printf("%d-%d-%d-%s-%d\n", lPos, rPos, lastPos, pat + lPos, tag);
-          segTag[segSize] = INC_TEST_JUDGETAG == 1? tag : 63;
-          segCont[segSize] = NULL;
-          segSize++;
-          lastPos = rPos + 1;
+          else
+          {
+            SyslogWarnning("<?> exists in the dic log! %d", segSize);
+          }
           lPos = -1;
         }
       }
@@ -300,24 +309,21 @@ typedef struct SubPattern
       }
       if(lPos >= 0 && rPos > lPos)
       {
-        if(lPos !=0 && lPos != lastPos)
+        char fixlen_mark; int strTag_mark; int maxlen_mark;
+        int scanRst = sscanf(content + lPos, "<%c,%d,%d>", &fixlen_mark, &strTag_mark, &maxlen_mark);
+        if(scanRst == 3)//matched the var
         {
-          SubSegment[SegSize] = new char[lPos - lastPos +1]{'\0'};
-          strncpy(SubSegment[SegSize], content + lastPos, lPos - lastPos);
-          SubSegAttr[SegSize] = SEG_TYPE_CONST;
-          SubVars[SegSize] = NULL;
-          SegSize++;
-        }
-        SubSegment[SegSize] = NULL;
-        //Segment[SegSize] = new char[MAX_PATNAME_SIZE]{'\0'};
-        //sprintf(Segment[SegSize],"%s~%d.svar",vname, VarNum);
-        SubSegAttr[SegSize] = vname | (VarNum<<4) | VAR_TYPE_SUB;
-        char fixlen_mark;
-	      int strTag_mark;
-	      int maxlen_mark;
-	      int scanRst = sscanf(content + lPos, "<%c,%d,%d>", &fixlen_mark, &strTag_mark, &maxlen_mark);
-        if(scanRst == 3)
-        {
+          if(lPos !=0 && lPos != lastPos)//exit the const chars
+          {
+            SubSegment[SegSize] = new char[lPos - lastPos +1]{'\0'};
+            strncpy(SubSegment[SegSize], content + lastPos, lPos - lastPos);
+            SubSegAttr[SegSize] = SEG_TYPE_CONST;
+            SubVars[SegSize] = NULL;
+            SegSize++;
+          }
+          //deal with the var
+          SubSegment[SegSize] = NULL;
+          SubSegAttr[SegSize] = vname | (VarNum<<4) | VAR_TYPE_SUB;
           if(INC_TEST_JUDGETAG)
           {
             SubVars[SegSize] = new SubVarInfo(fixlen_mark, strTag_mark, maxlen_mark);
@@ -326,15 +332,15 @@ typedef struct SubPattern
           {
             SubVars[SegSize] = new SubVarInfo(fixlen_mark, 63, maxlen_mark);
           }
+          SegSize++;
+          VarNum++;
+          lastPos = rPos + 1;
         }
         else
         {
-          ;
+          SyslogWarnning("<?> exists in the subvar log!");
         }
-        SegSize++;
-        VarNum++;
-        lastPos = rPos + 1;
-        lPos = -1;
+        lPos = -1; //reset the var's flag
       }
     }
     if(lastPos < ContSize)
@@ -347,6 +353,7 @@ typedef struct SubPattern
     }
   }
 }SubPattern;
+
 
 typedef struct VarOutliers
 {

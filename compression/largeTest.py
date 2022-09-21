@@ -9,15 +9,11 @@ from subprocess import call
 from concurrent.futures import ThreadPoolExecutor, wait, ALL_COMPLETED  
 from os.path import join, getsize
 
+TYPE = ["Android", "Apache", "Bgl", "Hadoop", "Hdfs", "Healthapp", "Hpc", "Linux", "Mac", "Openstack", "Proxifier", "Spark", "Ssh", "Thunderbird", "Windows", "Zookeeper"]
 
 lock = threading.RLock()
 gl_threadTotTime = 0
 gl_errorNum = 0
-
-#func define
-def add_argument(parse):
-    parse.add_argument("--Input", "-I", help="The input directory include log files (such as 0.log, 1.log, etc...) like example/")
-    parse.add_argument("--Output", "-O", help="The output directory inclues output zip files (such as 0.zip, 1.zip, etc...) like example_zip/") 
 
 def path_pro(path):
     if(path[-1] != '/'):
@@ -25,7 +21,7 @@ def path_pro(path):
     return path
 
 def check_args(args):
-    print("Input file: {}".format(args.Input))
+    print("Now mode: {}, input file: {}".format(args.IsPadding, args.Input))
     if (not os.path.exists(args.Input)):
         print("No input path. Quit")
         return 0
@@ -60,7 +56,7 @@ def writeLog(fname, message, levelStr):
         logger.info(message)   
 
 #return exec time (t2-t1)
-def procFiles(file_list, fileBeginNo, fileEndNo, now_input, now_output, isPadding):
+def procFiles(filename, file_list, fileBeginNo, fileEndNo, now_input, now_output, isPadding):
     t1 = time.time()
     #parser
     input_path = path_pro(now_input)
@@ -76,7 +72,7 @@ def procFiles(file_list, fileBeginNo, fileEndNo, now_input, now_output, isPaddin
         print(order + " " + threading.current_thread().name)
         res = call(order,shell=True)
         if (res != 0):
-            tempStr = "thread: {}, fileNo: {} ERROR!!".format(threading.current_thread().name, filename, str(i))
+            tempStr = "thread: {}, filename: {}, fileNo: {} ERROR!!".format(threading.current_thread().name, filename, str(i))
             print (tempStr)
             writeLog("./Log_{}".format(datetime.date.today()), tempStr,'WARNING')
             atomic_addErrnum(1)
@@ -99,7 +95,7 @@ def getdirsize(dir):
     return size
 
 
-def threadsToExecTasks(file_list, now_input, now_output, isPadding):
+def threadsToExecTasks(filename, file_list, now_input, now_output, isPadding):
     fileListLen = len(file_list)
     curFileNumBegin = 0
     curFileNumEnd = 0
@@ -116,7 +112,7 @@ def threadsToExecTasks(file_list, now_input, now_output, isPadding):
         else:
             curFileNumEnd = curFileNumBegin + step - 1
 
-        future = threadPool.submit(procFiles, file_list, curFileNumBegin, curFileNumEnd, now_input, now_output, isPadding)
+        future = threadPool.submit(procFiles, filename, file_list, curFileNumBegin, curFileNumEnd, now_input, now_output, isPadding)
         future.add_done_callback(procFiles_result)
         curFileNumBegin = curFileNumEnd + 1
     #wait(future, return_when=ALL_COMPLETED)
@@ -131,43 +127,50 @@ def recheck(fileListLen, now_input, now_output, isPadding):
     return new_set
 
 if __name__ == "__main__":
-    parse = argparse.ArgumentParser()
-    add_argument(parse)
-    args = parse.parse_args()
-    if (not check_args(args)):
-       exit(1)
 
     #init params
-    input_path = args.Input
-    output_path = args.Output
+    input_path = sys.argv[1] ## [Your download path for ./LogHub_Seg such as (/usr/LogHub_Seg/)] 
+    output_path = "../LogHub_Seg_zip/"
+    if(not os.path.exists(output_path)):
+        os.mkdir(output_path)
     is_padding = "T"
     maxThreadNum = 4
     maxSingleThreadProcFilesNum = 0
     #threadPool = ThreadPoolExecutor(max_workers = maxThreadNum, thread_name_prefix="test_")
     
     time1 = time.time()
-    now_input = input_path
-    time_t1 = time.time()
-    now_output = output_path
-    all_files = []
-    for i in os.listdir(now_input):
-        if(os.path.getsize(os.path.join(now_input, i)) > 1024):
-            all_files.append(i)
-
-
-    if (not os.path.exists(now_output)):
-        os.mkdir(now_output)
+    for filename in TYPE:
+        print("Now process: " + filename)
+        now_input = os.path.join(input_path, filename)
+        time_t1 = time.time()
+        now_output = os.path.join(output_path,filename)
+        all_files = []
+        
+        for i in os.listdir(now_input):
+            try:
+                if(os.path.getsize(os.path.join(now_input, i)) > 1024):
+                    all_files.append(i)
+            except:
+                continue
+        
+        if (not os.path.exists(now_output)):
+            os.mkdir(now_output)
         
         ###ThreadPool to Proc Files
         #file_list = list(recheck(len(all_files), now_input, now_output, is_padding))
         
-    threadsToExecTasks(all_files, now_input, now_output, is_padding)
+        threadsToExecTasks(filename, all_files, now_input, now_output, is_padding)
 
-    time_t2 = time.time()
-    tempStr = "Finished, total time cost: {} , thread accum time: {}".format(time_t2 - time_t1, gl_threadTotTime)
+        time_t2 = time.time()
+        tempStr = "{} finished, total time cost: {} , thread accum time: {}".format(filename, time_t2 - time_t1, gl_threadTotTime)
+        print(tempStr)
+        writeLog("./Log_{}".format(datetime.date.today()), tempStr,'WARNING')
+        gl_threadTotTime = 0 # reset
+
+    time2 = time.time() 
+    tempStr = "Main finished, total time cost: {} , error num: {}".format(time2 - time1, gl_errorNum)
     print(tempStr)
-    gl_threadTotTime = 0 # reset
-
+    writeLog("./Log_{}".format(datetime.date.today()), tempStr,'WARNING')
 
    
 

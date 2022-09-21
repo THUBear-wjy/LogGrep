@@ -9,7 +9,7 @@ from subprocess import call
 from concurrent.futures import ThreadPoolExecutor, wait, ALL_COMPLETED  
 from os.path import join, getsize
 
-TYPE = ["Apache", "Healthapp", "Hpc", "Linux", "Mac", "Proxifier", "Ssh", "Zookeeper"]
+TYPE = ["Apache", "Healthapp", "Hpc", "Linux", "Mac", "Proxifier", "Spark", "Ssh", "Zookeeper"]
 
 lock = threading.RLock()
 gl_threadTotTime = 0
@@ -130,6 +130,7 @@ if __name__ == "__main__":
 
     #init params
     input_path = "../example/"
+    ## input_path = "../LogHub_Seg/" ## [OPEN THIS COMMENT TO REPRODUCE ON LARGE DATASET] 
     output_path = "../example_zip/"
     if(not os.path.exists(output_path)):
         os.mkdir(output_path)
@@ -144,7 +145,10 @@ if __name__ == "__main__":
         now_input = os.path.join(input_path, filename)
         time_t1 = time.time()
         now_output = os.path.join(output_path,filename)
-        all_files = os.listdir(now_input)
+        all_files = []
+        for i in os.listdir(now_input):
+            if(os.path.getsize(os.path.join(now_input, i)) > 1024):
+                all_files.append(i)
 
         if (not os.path.exists(now_output)):
             os.mkdir(now_output)

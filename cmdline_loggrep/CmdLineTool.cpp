@@ -10,10 +10,11 @@ int main(int argc, char *argv[])
 { 
     //new
     CmdManager *cmdMan = new CmdManager();
-    if(argc == 1)
+    if(argc < 3)
     { 
-        main_while_flag = true;
-        cmdMan->DoCmdAnalysis();
+        main_while_flag = false;
+        printf("please input like: ./thulr_cmdline <full filepath> <query string>.\n");
+        printf("for example: ./thulr_cmdline home/disk3/Hadoop/ \"job_12345_0001\"");
     }
     else if(argc == 3)
     {

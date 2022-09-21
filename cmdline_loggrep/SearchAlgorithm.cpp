@@ -449,6 +449,10 @@ int BM_Fixed_Align(char* text, int sIdx, int tLen, const char* pattern, BitMap* 
 	}
 	else
 	{
+		if(strlen(pattern) == 1 && pattern[0] == ' ')
+		{
+			return Fixed_AlignL_For_Empty(text, sIdx, tLen, bitmap, lineLen, en_union_skip);
+		}
 		return BM_Fixed_AlignL(text, sIdx, tLen, pattern, bitmap, lineLen, en_union_skip);
 	}
 }
@@ -577,7 +581,29 @@ int BM_Fixed_AlignL(char* text, int sIdx, int tLen, const char* pattern, BitMap*
     }
 	return bitmap->GetSize();  
 }
-
+int Fixed_AlignL_For_Empty(char* text, int sIdx, int tLen, BitMap* bitmap, int lineLen, bool enableUnionSkip)
+{
+	if(bitmap->BeSizeFul())
+	{
+		return DEF_BITMAP_FULL;
+	}
+	int pLen_1 = 0;
+	int j = pLen_1;
+	int lineNo = sIdx;
+	bool enable = true;
+    while(j < tLen)
+    {  
+		//matched  
+		if(' ' == (text+j)[lineLen-1])
+		{  
+			bitmap->Union(lineNo);
+		}
+		//directly jump to the next line end
+		j += lineLen;
+		lineNo++;
+    }
+	return bitmap->GetSize();  
+}
 //bm for the same line length
 int BM_Fixed_Anypos(char* text, int sIdx, int tLen, const char* pattern, BitMap* bitmap, int lineLen)
 {
@@ -806,19 +832,37 @@ int BM_Fixed_Pushdown(char* text, const char* pattern, BitMap* bitmap, int lineL
 	}
 	else
 	{
-		int* badc;
-		int* goods;
-		InitBM(pattern, badc, goods);
-		for(int i=0;i< bitmapSize;i++)
+		//allow <V> contains empty space
+		if(pattern[0] == ' ' && strlen(pattern) == 1)
 		{
-			matchResult = SeqMatching_AlignLeft(text + bitmap->GetIndex(i) * lineLen, lineLen, pattern, pLen, badc, goods);
-			if(matchResult > 0)
+			for(int i=0;i< bitmapSize;i++)
 			{
-				bitmap->Inset(bitmap->GetIndex(i));// only set Index[]
+				if((text + bitmap->GetIndex(i+1) * lineLen -1)[0] == ' ')//to the end of the line
+				{
+					bitmap->Inset(bitmap->GetIndex(i));
+				}
+				else
+				{
+					bitmap->Reset(bitmap->GetIndex(i));
+				}
 			}
-			else
+		}
+		else
+		{
+			int* badc;
+			int* goods;
+			InitBM(pattern, badc, goods);
+			for(int i=0;i< bitmapSize;i++)
 			{
-				bitmap->Reset(bitmap->GetIndex(i));// only set bitmap as 0
+				matchResult = SeqMatching_AlignLeft(text + bitmap->GetIndex(i) * lineLen, lineLen, pattern, pLen, badc, goods);
+				if(matchResult > 0)
+				{
+					bitmap->Inset(bitmap->GetIndex(i));// only set Index[]
+				}
+				else
+				{
+					bitmap->Reset(bitmap->GetIndex(i));// only set bitmap as 0
+				}
 			}
 		}
 	}
@@ -1596,6 +1640,10 @@ int QueryInStr_CReg(const char* text, const char *regPattern)
 int MatchInSubpatVar_Forward(int strTag_mark, int maxlen_mark, const char* source, int souLen, int& souIndex)
 {
 	int count =0;
+	if(souIndex == souLen)//allow empty space in vars
+	{
+		return count;
+	}
 	int	thisChar_mark = GetCharTag(source[souIndex]);
 	while((thisChar_mark & strTag_mark) == thisChar_mark)
 	{
@@ -1955,7 +2003,13 @@ int SubPatMatch_I_J(SubPattern* pat, const char* source, int souLen, OUT RegMatr
 		}
 		else if(pat->SubSegAttr[i] > SEG_TYPE_SUBVAR)
 		{
-			if(INC_TEST_JUDGELEN && souLen > pat->SubVars[i]->len) continue;//length is overflow
+			char aaa = pat->SubVars[i]->mark;
+			int tttt = pat->SubVars[i]->tag;
+			int ii = pat->SubVars[i]->len;
+			if(INC_TEST_JUDGELEN && souLen > ii) 
+			{
+				continue;//length is overflow
+			}
 			int souIndex = 0;
 			int count = MatchInSubpatVar_Forward(pat->SubVars[i]->tag, pat->SubVars[i]->len, source, souLen, souIndex);
 			if(count == souLen)

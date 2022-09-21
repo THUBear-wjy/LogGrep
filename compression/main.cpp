@@ -107,7 +107,8 @@ int matchFile(string input_path, LengthParser* parser, string zip_mode, int * Ei
             }
             //执行处理程序
             int eid = parser -> SearchTemplate(mbuf, segArray, segSize, variables, true);
-			if(eid == -1)
+			Eid[nowLine] = eid;
+            if(eid == -1)
             {
                 // lineLen = lineEnd-lineStart;
 				failed_num[failLine] = nowLine;
@@ -286,6 +287,11 @@ void proc(string input_path, string output_path, string is_padding, string zip_m
     int nowline = 0;
     int failLine = matchFile(input_path, &parser, zip_mode, Eid, failed_num, failed_log, variable_mapping, nowline);
     
+    // FILE* file_out = fopen((output_path +".eid").c_str(), "w");
+    // for(int i = 0; i < nowline;i++){
+    //     fprintf(file_out, "%d\n", Eid[i]);
+    // }
+    // fclose(file_out);
     //int ii=5;
     
     // for(map<int, VarArray>::iterator iter = variable_mapping.varMapping.begin(); iter!= variable_mapping.varMapping.end(); iter++)

@@ -1,0 +1,27 @@
+2022-09-21 10:52:26,191 - Apache finished, total time cost: 0.7950997352600098 , thread accum time: 0.7942359447479248
+2022-09-21 10:52:31,768 - Healthapp finished, total time cost: 5.576994180679321 , thread accum time: 5.576368570327759
+2022-09-21 10:52:38,666 - Hpc finished, total time cost: 6.897602319717407 , thread accum time: 6.896836519241333
+2022-09-21 10:52:39,241 - Linux finished, total time cost: 0.5741970539093018 , thread accum time: 0.573528528213501
+2022-09-21 10:52:42,042 - Mac finished, total time cost: 2.801018714904785 , thread accum time: 2.800323963165283
+2022-09-21 10:52:42,552 - Proxifier finished, total time cost: 0.5092446804046631 , thread accum time: 0.5086004734039307
+2022-09-21 10:52:54,773 - Spark finished, total time cost: 12.220349311828613 , thread accum time: 33.98534178733826
+2022-09-21 10:53:04,961 - Ssh finished, total time cost: 10.188123941421509 , thread accum time: 11.060810804367065
+2022-09-21 10:53:05,971 - Zookeeper finished, total time cost: 1.0094938278198242 , thread accum time: 1.0087807178497314
+2022-09-21 10:53:05,971 - Main finished, total time cost: 40.5764799118042 , error num: 0
+2022-09-21 11:05:55,415 - Android finished, total time cost: 16.049208164215088 , thread accum time: 45.22306752204895
+2022-09-21 11:05:56,225 - Apache finished, total time cost: 0.8097188472747803 , thread accum time: 0.8081893920898438
+2022-09-21 11:06:32,919 - Bgl finished, total time cost: 36.693572998046875 , thread accum time: 126.88914012908936
+2022-09-21 11:14:43,949 - Hadoop finished, total time cost: 491.0297977924347 , thread accum time: 1920.7967867851257
+2022-09-21 11:15:49,438 - Hdfs finished, total time cost: 65.48824715614319 , thread accum time: 250.23961877822876
+2022-09-21 11:15:55,076 - Healthapp finished, total time cost: 5.638186693191528 , thread accum time: 5.6270530223846436
+2022-09-21 11:16:02,053 - Hpc finished, total time cost: 6.975893259048462 , thread accum time: 6.97142767906189
+2022-09-21 11:16:02,634 - Linux finished, total time cost: 0.5806705951690674 , thread accum time: 0.5790143013000488
+2022-09-21 11:16:05,491 - Mac finished, total time cost: 2.857253313064575 , thread accum time: 2.8522896766662598
+2022-09-21 11:16:13,434 - Openstack finished, total time cost: 7.942400217056274 , thread accum time: 7.937554597854614
+2022-09-21 11:16:13,940 - Proxifier finished, total time cost: 0.5054690837860107 , thread accum time: 0.5043468475341797
+2022-09-21 11:18:35,072 - Spark finished, total time cost: 141.13107442855835 , thread accum time: 548.4295902252197
+2022-09-21 11:18:45,540 - Ssh finished, total time cost: 10.468403100967407 , thread accum time: 11.390830516815186
+2022-09-21 11:38:43,106 - Thunderbird finished, total time cost: 1197.5651133060455 , thread accum time: 4660.842725515366
+2022-09-21 11:45:06,193 - Windows finished, total time cost: 383.08642578125 , thread accum time: 1505.3386452198029
+2022-09-21 11:45:07,244 - Zookeeper finished, total time cost: 1.0509929656982422 , thread accum time: 1.036531925201416
+2022-09-21 11:45:07,244 - Main finished, total time cost: 2367.8798780441284 , error num: 0

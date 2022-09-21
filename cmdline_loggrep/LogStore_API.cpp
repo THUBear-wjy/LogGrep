@@ -222,10 +222,6 @@ int LogStoreApi::LoadOutliers(IN char *buf, int lineCount)
 	//get the max count
 	if(m_maxBitmapSize < lineCount)
 		m_maxBitmapSize = lineCount;
-	// for(int i=0;i<lineCount;i++)
-	// {
-	// 	SyslogDebug("%s\n",m_outliers[i]);
-	// }
 	return index;
 }
 
@@ -1172,7 +1168,10 @@ int LogStoreApi::GetSubVals_Pushdown(RegMatches regmatches, const char* regPatte
 	for(int j=0; j< setY;j++)
 	{
 		memset(queryStr,'\0', MAX_VALUE_LEN);
-		strncpy(queryStr, regPattern + regmatches.Match[j].So, regmatches.Match[j].Eo);
+		if(regmatches.Match[j].Eo == 0)//allow empty space in vars
+			queryStr[0] = ' ';
+		else
+			strncpy(queryStr, regPattern + regmatches.Match[j].So, regmatches.Match[j].Eo);
 		if(regmatches.Match[j].So == 0)//matched from the start pos
 		{
 			if(setY == 1 && regmatches.Match[j].Eo == strlen(regPattern))//can matched at anypos
@@ -1684,7 +1683,7 @@ int LogStoreApi::Materializ_Subpat(SubPattern* subpat, int varname, BitMap* bitm
 								map<int,char*>::iterator itor = m_varouts[outfilename]->Outliers.find(bitmap->GetIndex(i));
 								if(itor != m_varouts[outfilename]->Outliers.end())
 								{
-									printf("find in var outliers: %d %d\n", outfilename, bitmap->GetIndex(i));
+									//printf("find in var outliers: %d %d\n", outfilename, bitmap->GetIndex(i));
 									memcpy(vars + i * MAX_VALUE_LEN, m_varouts[outfilename]->Outliers[bitmap->GetIndex(i)], strlen(m_varouts[outfilename]->Outliers[bitmap->GetIndex(i)]));
 								}
 							}
@@ -1718,7 +1717,7 @@ int LogStoreApi::Materializ_Subpat(SubPattern* subpat, int varname, BitMap* bitm
 						{
 							if(varIndex==0)
 							{
-								printf("Get from var outliers. %d--%d\n", outfilename, i);
+								//printf("Get from var outliers. %d--%d\n", outfilename, i);
 								memcpy(vars + i * MAX_VALUE_LEN, m_varouts[outfilename]->Outliers[i], strlen(m_varouts[outfilename]->Outliers[i]));
 							}
 						}
@@ -1747,7 +1746,7 @@ int LogStoreApi::Materializ_Subpat(SubPattern* subpat, int varname, BitMap* bitm
 								map<int,char*>::iterator itor = m_varouts[outfilename]->Outliers.find(i);
 								if(itor != m_varouts[outfilename]->Outliers.end())
 								{
-									printf("find in var outliers: %d %d\n", outfilename, i);
+									//printf("find in var outliers: %d %d\n", outfilename, i);
 									memcpy(vars + i * MAX_VALUE_LEN, m_varouts[outfilename]->Outliers[i], strlen(m_varouts[outfilename]->Outliers[i]));
 								}
 							}

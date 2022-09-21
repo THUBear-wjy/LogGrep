@@ -11,6 +11,8 @@ Compression code to compress original log files into zip files. Core logic are i
 A minimal working example for quick test. Each folder corresponds to a kind of log, inside which log files are cut into block (64MB for each).
 ## ./example_zip
 Empty by default. Compressed results during quick test can be found here.
+## ./LogHub_Seg_zip
+Empty by default. Compressed results during large test can be found here.
 ## ./output
 Empty by default.
 ## ./readline
@@ -54,19 +56,41 @@ use ``yum groupinstall 'Development Tools`` to install other requirements.
 
 ``python3 quickTest.py``
 
-Then you can find compressed files in ./example_zip/
+Then you can find compressed files in ./example_zip/.
 
 ``cd ./cmdline_loggrep``
 
 ``./thulr_cmdline [Compressed Folder] [QUERY]``
 
-[QUERY] is the query statement (which can be found in ./query.txt)
+[QUERY] is the query statement
 
 [Compressed Folder] is one of the folder under ./example_zip/
 
-For example, to run query on Apache logs, you can use command as follow:
+All testing query for quick test can be found at ./query4quicktest.txt. For example, to run query on Apache logs, you can use command as follow:
 
 ``./thulr_cmdline ../example_zip/Apache "error and Invalid URI in request"``
+## Large test for reproduce
+Download large dataset from https://zenodo.org/record/7056802#.Yxm1RexBwq1 at [DATASET PATH] (such as /usr/LogHub_Seg/)
+
+``cd ./compression``
+
+``python3 largeTest.py [DATASET PATH]``
+
+Then you can find compressed files in ./LogHub_Seg_zip/. 
+
+You can also find a compression summary under ./compression such as ./compression/Log_2022-09-21, which records whether there is an error and the compression speed.
+
+``cd ./cmdline_loggrep``
+
+``./thulr_cmdline [Compressed Folder] [QUERY]``
+
+[QUERY] is the query statement
+
+[Compressed Folder] is one of the folder under ./LogHub_Seg_zip/
+
+All testing query for large test can be found at ./query4largetest.txt. For example, to run query on Hadoop logs, you can use command as follow:
+
+``./thulr_cmdline ../LogHub_Seg_zip/Hadoop "ERROR and RECEIVED SIGNAL 15: SIGTERM and 2015-09-23"``
 
 # Usage instructions
 To use LogGrep to compress and query their logs, users needs
@@ -85,7 +109,7 @@ Process original big log file as a folder such as ./DIR (like one of the foler u
 ## Testing dataset
 16 types of open access logs can be downloaded at https://zenodo.org/record/7056802#.Yxm1RexBwq1
 ## Excution commands
-The query commands for each type of logs can be found in ./query.txt (assume all logs are stored under ./example_zip)
+See large test for reproduce above
 ## Claimed results
 |  LogType   | Original Size(KB) |Compressed Size(KB)  | Total Compression Latency(s) | Accumulated Compression Latency(s)| Query Latency(s) |
 | ----- |----- | ------ | ------ | ------ | ------ |

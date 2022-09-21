@@ -4,8 +4,6 @@ TEMP_DIR =
 REFER_DIR = ../compression/
 REFER2_DIR = ../compression/LZMA/
 EXE_DIR = ../output/
-READLINE_DIR = ../readline/
-TERMCAP_DIR = ../termcap/
 #######################
 RM	= rm -fr
 DEL_FILE	= rm -f
@@ -18,9 +16,6 @@ READLINE = -D	READLINE_LIBRARY
 ##LANGUAGE = -D	CHINESE
 
 BIN_OBJECT	= thulr_cmdline
-READLINELIB_OBJECT = libreadline.a
-HISLIB_OBJECT = libhistory.a
-TERMCAPLIB_OBJECT = libtermcap.a
 LZMALIB_OBJECT = liblzma.a
 
 AR	= ar -rc
@@ -76,7 +71,7 @@ all: APP clean
 APP: $(BIN_OBJECT)
 	
 $(BIN_OBJECT):$(OBJECTS)
-	$(CXX) -o  $(BIN_OBJECT) $(OBJECTS) $(READLINE_DIR)$(HISLIB_OBJECT) $(READLINE_DIR)$(READLINELIB_OBJECT) $(TERMCAP_DIR)$(TERMCAPLIB_OBJECT) $(REFER2_DIR)$(LZMALIB_OBJECT) -l dl
+	$(CXX) -o  $(BIN_OBJECT) $(OBJECTS)  $(REFER2_DIR)$(LZMALIB_OBJECT) -l dl
 	cp $(BIN_OBJECT) $(EXE_DIR)
 	
 $(OBJECTS):$(SRC_OBJECTS) $(H_OBJECTS)

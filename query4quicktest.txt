@@ -1,0 +1,17 @@
+./thulr_cmdline ../example_zip/Apache "error and Invalid URI in request"
+
+./thulr_cmdline ../example_zip/Healthapp "Step_ExtSDM and totalAltitude=0"
+
+./thulr_cmdline ../example_zip/Hpc "unavailable state and HWID=3378"
+
+./thulr_cmdline ../example_zip/Linux "authentication failure and rhost=221.230.128.214"
+
+./thulr_cmdline ../example_zip/Mac "failed and Err:-1 Errno:1"
+
+./thulr_cmdline ../example_zip/Proxifier "HTTPS and play.google.com:443"
+
+./thulr_cmdline ../example_zip/Spark "ERROR and Error sending result"
+
+./thulr_cmdline ../example_zip/Ssh "Received disconnect from and 202.100.179.208"
+
+./thulr_cmdline ../example_zip/Zookeeper "ERROR and CommitProcessor"

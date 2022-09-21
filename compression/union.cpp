@@ -200,14 +200,14 @@ string Union::getFormat(const char* start, int len){
     if(*start == ' ' && len == 1) format = "<-1>";
     for(int i = 0; i < len; i++){
         if(getTypeC(start[i]) == symbol_TY){
-            if(nowType != 0) format += "<" + to_string(nowType) + ">";
+            if(nowType != 0) format += "<V," + to_string(nowType) + ">";
             format += start[i];
             nowType = 0;
         }else{
             nowType |= getTypeC(start[i]);
         }
     }
-    if(nowType != 0) format += "<" + to_string(nowType) + ">";
+    if(nowType != 0) format += "<V," + to_string(nowType) + ">";
     return format;
 }
 
@@ -271,6 +271,8 @@ void Union::buildMapping(VarArray* varMapping){
     int finalIdx = patCount - 1;
     nowPaddingSize[finalIdx] = 0;
     nowCounter[finalIdx] = 0;
+    bool fixed = true;
+    int finalLen = -1;
     for(int i = 0; i < tot; i++){
         int nowUniquePos = UniquePos[i];
         if(dictionary[HashValue[nowUniquePos]] == -1){
@@ -281,7 +283,7 @@ void Union::buildMapping(VarArray* varMapping){
         }
     }
     
-    nowFormat[finalIdx] = "<" + to_string(finalType) + ">";
+    nowFormat[finalIdx] = "<V," + to_string(finalType) + ">";
     //printf("end build mapping\n");
 }
 

@@ -50,6 +50,7 @@ void BuildGoodS(const char *pattern, int* &goods);
 
 int BM_Fixed_AlignR(char* text, int sIdx, int tLen, const char* pattern, BitMap* bitmap, int lineLen, bool enableUnionSkip=false);
 int BM_Fixed_AlignL(char* text, int sIdx, int tLen, const char* pattern, BitMap* bitmap, int lineLen, bool enableUnionSkip=false);
+int Fixed_AlignL_For_Empty(char* text, int sIdx, int tLen, BitMap* bitmap, int lineLen, bool enableUnionSkip=false);
 
 int SeqMatching_AlignLeft(const char *S, int sLen, const char *T, int tLen);
 int SeqMatching_AlignLeft(const char * S, int sLen, const char * T, int tLen, int* badc, int* goods);
