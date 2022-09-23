@@ -3,22 +3,20 @@ This is the open-source code of paper "LogGrep: Fast and Cheap Cloud Log Storage
 Junyu Wei, Guangyan Zhang, Junchao Chen, Yang Wang, Weimin Zheng, Tingtao Sun, Jiesheng Wu, Jiangwei Jiang. LogGrep: Fast and Cheap Cloud Log Storage by Exploiting both Static and Runtime Patterns. in Proceedings of the 18th European Conference on Computer Systems (EuroSys’23), Roma, Italy, May 2023.
 
 # Folder Description
-## ./cmdline_loggrep
+## cmdline_loggrep
 Query code to search on compressed logs. The entry is in CmdLineTool. Main logics are in LogStore_API.cpp and SearchAlgorithm.cpp
-## ./compression
+## compression
 Compression code to compress original log files into zip files. Core logic are in main.cpp.
-## ./example
+## example
 A minimal working example for quick test. Each folder corresponds to a kind of log, inside which log files are cut into block (64MB for each).
-## ./example_zip
+## example_zip
 Empty by default. Compressed results during quick test can be found here.
-## ./LogHub_Seg_zip
+## LogHub_Seg_zip
 Empty by default. Compressed results during large test can be found here.
-## ./output
+## output
 Empty by default.
-## ./readline
-Third party code to parse cmd command.
-## ./termcapT
-Third party code.
+## ESTesting
+Testing script for Elasticsearch to compare with LogGrep.
 
 # Supported environments
 ## Hardware
@@ -70,7 +68,7 @@ Then you can find compressed files in ./example_zip/.
 All testing query for quick test can be found at ./query4quicktest.txt. For example, to run query on Apache logs, you can use command as follow:
 
 ``./thulr_cmdline ../example_zip/Apache "error and Invalid URI in request"``
-## Large test for reproduce
+## Large test
 Download large dataset from https://zenodo.org/record/7056802#.Yxm1RexBwq1 at [DATASET PATH] (such as /usr/LogHub_Seg/)
 
 ``cd ./compression``
@@ -104,7 +102,7 @@ Process original big log file as a folder such as ./DIR (like one of the foler u
 ## step 3: query logs
 ``cd ./cmdline_loggrep``
 
-``./thulr_cmdline [Compressed Folder] [YOUR QUERY STATEMENT]``
+``./thulr_cmdline [Compressed Folder] [QUERY]``
 
 # Reproduce Results
 ## Testing dataset
@@ -135,19 +133,76 @@ See large test for reproduce above
 * Query latency includes "LoadMetaTime" + "SearchTotalTime".
 
 ## Compared system (Baseline)
+### Linux gzip and Linux grep 
+Linux grep by default settings. gzip of version 1.5. Since grep and gzip are Linux native tool, it does not install. You can use gzip to compress logs, use unzip to decompress logs and use grep to query on logs. 
+
+We use pipline stream to execute "and" logic with grep and grep -E to execute "or". 
+
+For example, to execute ``ERROR and socket read length failure -104`` on Apache we run
+``grep "ERROR" [all decompressed logs] | grep "socket read length failure -104"``
+
+For example, to execute ``"ERROR or WARNING and Unexpected error while running command"`` on Openstack we run
+``grep -E "ERROR|WARNING" [all decompressed logs] | grep "Unexpected error while running command"``
+
+### ElasticSearch
+#### Download
+We download elasticsearch-7.14.0-linux-x86_64.tar at https://www.elastic.co/downloads/past-releases/elasticsearch-7-14-0.
+#### Install and running
+Decompress the package and run elasticsearch in background
+
+``tar -xf elasticsearch-7.14.0-linux-x86_64.tar``
+
+``cd ./elasticsearch-7.14.0/bin/``
+
+``./elasticsearch -d``
+
+``pip3 install elasticsearch``
+#### Log Inserting
+Using elastic_bulk_s.py under ./ESTesting to insert logs
+
+``cd ./ESTesing``
+
+``python3 elastic_bulk_s.py [LogFile] [indexName]``
+
+For example, to test Apache logs, we can concate all log files under ./example/Apache as a large log file Apache.log and run
+
+``python3 elastic_bulk_s.py ./Apache.log Apache``
+
+The compression time can be found when running this inserting process and the compression size can be found with
+
+``curl -X GET localhost:9200/_cat/indices?v``
+
+The size of index Apache will be shown.
+#### Log Query
+We write testing scripts for all logs for large test under ./ESTesting. After inserting logs into Apache index, we can use the following command to query on logs.
+
+``python3 apache.py``
+
 ### CLP
-Source code can be found at https://github.com/y-scope/clp-core
+Source code can be found at https://github.com/y-scope/clp/tree/main/components/core
+#### Download and Install
+A detailed downloading and installing process can be found at README.md file under https://github.com/y-scope/clp/tree/main/components/core
+#### Log Compression
+We compress logs using clp:
+
+``./clp c [compressed-dir] [log files]``
+
+We concate all log files under the same directory in LogHub_Seg (such as concate all logs under LogHub_Seg/Hadoop as Hadoop.log) and compress this log using clp, record compression time.
+
+The compressed size can be found by:
+
+``du -k [compressed-dir]``
+#### Log Query
+We query logs using clg:
+
+``./clg [compressed-dir] [Query]``
 
 Since CLP can not process logic operators like "and" and "not", we use CLP to execute the first part connected by logic operators and use grep to execute the following part.
 
 For example, to execute ``ERROR and socket read length failure -104`` on Apache we run
-
 ``./clg archives-dir "ERROR" | grep "socket read length failure -104"``
 
-### ElasticSearch
-We use Elasticsearch 7.8.0 at https://www.elastic.co/downloads/past-releases/elasticsearch-7-8-0
-### Linux gzip and Linux grep 
-Linux grep by default settings. gzip of version 1.5.
+CLP can not run queries on Openstack (since it includes "or" logic), this has be reported in the paper. 
 
 ## Claims when compared with baseline
 ### Claim 1: 
