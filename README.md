@@ -69,15 +69,19 @@ All testing query for quick test can be found at ./query4quicktest.txt. For exam
 
 ``./thulr_cmdline ../example_zip/Apache "error and Invalid URI in request"``
 ## Large test
-Download large dataset from https://zenodo.org/record/7056802#.Yxm1RexBwq1 at [DATASET PATH] (such as /usr/LogHub_Seg/)
+Download large dataset from https://zenodo.org/record/7056802#.Yxm1RexBwq1 to ../LogHub_Seg/
+
+First compress these log blocks.
 
 ``cd ./compression``
 
-``python3 largeTest.py [DATASET PATH]``
+``python3 largeTest.py ../LogHub_Seg/``
 
-Then you can find compressed files in ./LogHub_Seg_zip/. 
+Then you can find compressed files in ./LogHub_Seg_zip/
 
 You can also find a compression summary under ./compression such as ./compression/Log_2022-09-21, which records whether there is an error and the compression speed.
+
+Then query compressed logs.
 
 ``cd ./cmdline_loggrep``
 
@@ -91,25 +95,8 @@ All testing query for large test can be found at ./query4largetest.txt. For exam
 
 ``./thulr_cmdline ../LogHub_Seg_zip/Hadoop "ERROR and RECEIVED SIGNAL 15: SIGTERM and 2015-09-23"``
 
-# Usage instructions
-To use LogGrep to compress and query their logs, users need
-## Step 1: preprocess logs
-Process original big log file as a folder such as ./DIR (like one of the foler under ./example/), insider which original log file is cut as several log blocks (each is no larger than 64MB).
-## Step 2: compress logs
-``cd ./compression``
-
-``python3 LogGrep-compression.py -I [Original Folder] -O [Compressed Folder]``
-## step 3: query logs
-``cd ./cmdline_loggrep``
-
-``./thulr_cmdline [Compressed Folder] [QUERY]``
-
 # Reproduce Results
-## Testing dataset
-16 types of open access logs can be downloaded at https://zenodo.org/record/7056802#.Yxm1RexBwq1
-## Excution commands
-See large test for reproduce above
-## Claimed results
+## Large test claimed results for LogGrep
 |  LogType   | Original Size(KB) |Compressed Size(KB)  | Total Compression Latency(s) | Accumulated Compression Latency(s)| Query Latency(s) |
 | ----- |----- | ------ | ------ | ------ | ------ |
 | Android | 186984 | 7556 | 14.62 | 40.84 | 0.80 |
@@ -129,20 +116,26 @@ See large test for reproduce above
 | Windows| 27245112 | 61428 | 348.37 | 1376.77 | 4.80 |
 | Zookeeper| 10116 | 196 | 0.99 | 0.99 | 0.02 |
 * Use Linux ``du -k [DIR]`` to see the Original/Compressed size.
-* We run compression in parallel with 4 threads, here we list both total and accumlated results. A time statistic file can be found under ./compression when fininshing compression.
-* Query latency includes "LoadMetaTime" + "SearchTotalTime".
+* We run compression in parallel with 4 threads, when finishing all compression, there will be a log files under ./compression (such as Log_2022-09-21) to record the compressino time. We list thread accum time for each type of logs here.
+* When running the query command, we can find a statistics. We calculate Query latency with LogMetaTime + SearchTotalTime.
 
 ## Compared system (Baseline)
 ### Linux gzip and Linux grep 
-Linux grep by default settings. gzip of version 1.5. Since grep and gzip are Linux native tool, it does not install. You can use gzip to compress logs, use unzip to decompress logs and use grep to query on logs. 
+Linux grep by default settings. gzip of version 1.5. Since grep and gzip are Linux native tool, it does not install. You can use gzip to compress original logs, use unzip to decompress logs and use grep to query on logs. 
 
-We use pipline stream to execute "and" logic with grep and grep -E to execute "or". 
+We use multiple grep to execute "and" logic, use "-v" to exeucte "not" logic and -E to execute "or" logic. 
 
-For example, to execute ``ERROR and socket read length failure -104`` on Apache we run
-``grep "ERROR" [all decompressed logs] | grep "socket read length failure -104"``
+To test all 16 types of logs, run 
 
-For example, to execute ``"ERROR or WARNING and Unexpected error while running command"`` on Openstack we run
-``grep -E "ERROR|WARNING" [all decompressed logs] | grep "Unexpected error while running command"``
+``cd ./ggrepTesting``
+
+``python3 ggrepTesting.py``
+
+To final query latency for ggrep method is decompression time + query time.
+
+To see the compression size use 
+
+``du -k ./ggrepTesting/*.tar.gz``
 
 ### ElasticSearch
 #### Download
@@ -168,6 +161,8 @@ For example, to test Apache logs, we can concate all log files under ./example/A
 
 ``python3 elastic_bulk_s.py ./Apache.log Apache``
 
+We have listed all testing commands in ./ESTesting/ES4test.txt and also listed the predict running time, notice some logs may cause a very log inserting time (up to 7-22 hours)
+
 The compression time can be found when running this inserting process and the compression size can be found with
 
 ``curl -X GET localhost:9200/_cat/indices?v``
@@ -181,26 +176,31 @@ We write testing scripts for all logs for large test under ./ESTesting. After in
 ### CLP
 Source code can be found at https://github.com/y-scope/clp/tree/main/components/core
 #### Download and Install
-A detailed downloading and installing process can be found at README.md file under https://github.com/y-scope/clp/tree/main/components/core
-#### Log Compression
-We compress logs using clp:
+A detailed downloading and installing process can be found at README.md file under https://github.com/y-scope/clp/tree/main/components/core.
 
-``./clp c [compressed-dir] [log files]``
+We highly recommand you to run clp in docker environment, after you download the code you can run the following command to start a docker:
 
-We concate all log files under the same directory in LogHub_Seg (such as concate all logs under LogHub_Seg/Hadoop as Hadoop.log) and compress this log using clp, record compression time.
+``cp ./clpTesting/clpTesting.py /path/to/clp/core/``
 
-The compressed size can be found by:
+``docker run --rm -it --name 'clp-build-env' -u$(id -u):$(id -g) -v$(readlink -f /path/to/clp/core):/mnt/clp -v$(readlink -f /path/to/LogHub_Seg):/mnt/logs ghcr.io/y-scope/clp/clp-core-dependencies-x86-ubuntu-focal:main /bin/bash``
 
-``du -k [compressed-dir]``
-#### Log Query
-We query logs using clg:
+``cd /mnt/clp/build``
 
-``./clg [compressed-dir] [Query]``
+``mkdir build``
 
-Since CLP can not process logic operators like "and" and "not", we use CLP to execute the first part connected by logic operators and use grep to execute the following part.
+``cmake ../``
 
-For example, to execute ``ERROR and socket read length failure -104`` on Apache we run
-``./clg archives-dir "ERROR" | grep "socket read length failure -104"``
+``make``
+
+``cp ./clpTesting.py ./build/``
+
+``cd ./build``
+
+``python3 clpTesting.py``
+
+To see the compression size use 
+
+``du -k ./*.clp``
 
 CLP can not run queries on Openstack (since it includes "or" logic), this has be reported in the paper. 
 

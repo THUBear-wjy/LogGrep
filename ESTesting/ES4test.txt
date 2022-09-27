@@ -1,0 +1,63 @@
+python3 elastic_bulk_s.py ../LogHub_Seg_zip/Android/ android # Predict Running Time: 353s
+
+python3 apache.py
+
+python3 elastic_bulk_s.py ../LogHub_Seg_zip/Apache/ apache # Predict Running Time: 11s
+
+python3 apache.py
+
+python3 elastic_bulk_s.py ../LogHub_Seg_zip/Bgl/ bgl # Predict Running Time: 1461s
+
+python3 bgl.py
+
+python3 elastic_bulk_s.py ../LogHub_Seg_zip/Hadoop/ hadoop # Predict Running Time: 27504s(7 hours)
+
+pyton3 hadoop.py 
+
+python3 elastic_bulk_s.py ../LogHub_Seg_zip/Hdfs/ hdfs # Predict Running Time: 3905s
+
+python3 hdfs.py
+
+python3 elastic_bulk_s.py ../LogHub_Seg_zip/Healthapp/ healthapp # Predict Running Time: 51s
+
+python3 healthapp.py
+
+python3 elastic_bulk_s.py ../LogHub_Seg_zip/Hpc/ hpc # Predict Running Time: 75s
+
+python3 hpc.py
+
+python3 elastic_bulk_s.py ../LogHub_Seg_zip/Linux/ linux # Predict Running Time: 5s
+
+python3 linux.py
+
+python3 elastic_bulk_s.py ../LogHub_Seg_zip/Mac/ mac # Predict Running Time: 28s
+
+python3 mac.py
+
+python3 elastic_bulk_s.py ../LogHub_Seg_zip/Openstack/ openstack # Predict Running Time: 47s
+
+python3 openstack.py
+
+python3 elastic_bulk_s.py ../LogHub_Seg_zip/Proxifier/ proxifier # Predict Running Time: 5s
+
+python3 proxifier.py
+
+python3 elastic_bulk_s.py ../LogHub_Seg_zip/Spark/ spark # Predict Running Time: 9570s
+
+python3 spark.py
+
+python3 elastic_bulk_s.py ../LogHub_Seg_zip/Ssh/ ssh # Predict Running Time: 116s
+
+python3 ssh.py
+
+python3 elastic_bulk_s.py ../LogHub_Seg_zip/Thunderbird/ thunderbird # Predict Running Time: 80154s(22 hours)
+
+python3 thunderbird.py
+
+python3 elastic_bulk_s.py ../LogHub_Seg_zip/Windows/ windows # Predict Running Time: 44715s(12 hours)
+
+python3 windows.py
+
+python3 elastic_bulk_s.py ../LogHub_Seg_zip/Zookeeper/ zookeeper # Predict Running Time: 13s
+
+python3 zookeeper.py
