@@ -94,6 +94,26 @@ Then query compressed logs.
 All testing query for large test can be found at ./query4largetest.txt. For example, to run query on Hadoop logs, you can use command as follow:
 
 ``./thulr_cmdline ../LogHub_Seg_zip/Hadoop "ERROR and RECEIVED SIGNAL 15: SIGTERM and 2015-09-23"``
+## Docker environment
+We also upload a docker image to test LogGrep in https://hub.docker.com/repository/docker/junyuwei/loggrep. Users can download this image with "docker pull":
+
+``docker pull junyuwei/loggrep:v1``
+
+run docker image
+
+``docker run -itd docker.io/junyuwei/loggrep:v1``
+
+copy large dataset into LogGrep (use docker ps -a to check container ID)
+
+``docker cp /path/to/LogHub_Seg/ [ContainerID]:/LogGrep/LogHub_Seg/``
+
+connect into docker environment (use Ctrl+D to exit)
+
+``docker exec -it [ContainerID] /bin/bash``
+
+entry loggrep directory and run LogGrep
+
+``cd LogGrep``
 
 # Reproduce Results
 ## Large test claimed results for LogGrep
