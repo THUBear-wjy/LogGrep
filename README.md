@@ -27,6 +27,11 @@ RAM: 188GB
 ## OS Version
 Red Hat 4.8.5 with Linux kernel 3.10.0
 
+If you meet problem with other OS version, please:
+
+1. Try LogGrep of zstd version, which can adapt to more OS versions. (https://github.com/THUBear-wjy/LogGrep-zstd)
+2. Contact me with thuweijy@vip.163.com
+
 ## Compiler Version
 gcc version 4.8.5 20150623
 
